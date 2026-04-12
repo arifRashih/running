@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arif's Easy Run vs Avg HR</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0d0d; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.6; }
+  a { color: #7eb8f7; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* NAV */
+  nav { position: sticky; top: 0; z-index: 100; background: #141414; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; padding: 0 24px; height: 52px; gap: 16px; }
+  nav .brand { font-weight: 700; font-size: 15px; color: #fff; margin-right: auto; display: flex; align-items: center; gap: 8px; }
+  nav .brand span { font-size: 20px; }
+  nav a.nav-link { color: #aaa; font-size: 13px; padding: 6px 12px; border-radius: 6px; background: #1e1e1e; border: 1px solid #2e2e2e; display: flex; align-items: center; gap: 6px; }
+  nav a.nav-link:hover { background: #252525; color: #fff; text-decoration: none; }
+
+  /* MAIN */
+  main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
+  h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 6px; }
+  .cache-info { color: #555; font-size: 12px; margin-bottom: 28px; }
+
+  /* STATS ROW */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  @media (min-width: 640px) { .stats { grid-template-columns: repeat(6, 1fr); } }
+  .stat { background: #181818; border: 1px solid #252525; border-radius: 10px; padding: 14px 16px; }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #666; margin-bottom: 6px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
+  .stat-value.lg { font-size: 22px; }
+  .stat-sub { font-size: 11px; color: #555; margin-top: 4px; }
+  .stat-value.up { color: #f07070; }
+  .stat-value.down { color: #6bcb77; }
+  .stat-value.neutral { color: #f0c040; }
+
+  /* PB BADGES in stats */
+  .stat.pb-card { border-color: #3a3a1a; background: #1a1a12; }
+  .pb-badge { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 1px 6px; border-radius: 8px; background: #f0c04022; color: #f0c040; border: 1px solid #f0c04044; margin-left: 4px; vertical-align: middle; position: relative; top: -2px; }
+
+  /* COACH */
+  .coach { background: #141c14; border: 1px solid #1e3a1e; border-radius: 10px; padding: 18px 20px; margin-bottom: 24px; }
+  .coach-header { display: flex; align-items: center; gap: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #5a9a5a; margin-bottom: 10px; }
+  .coach-header span { font-size: 18px; }
+  .coach p { font-size: 14px; color: #c8c8c8; line-height: 1.7; }
+
+  /* CHART */
+  .chart-section { background: #181818; border: 1px solid #252525; border-radius: 10px; padding: 20px; margin-bottom: 24px; }
+  .chart-title { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #666; margin-bottom: 4px; }
+  .chart-hint { font-size: 11px; color: #444; margin-bottom: 14px; }
+  canvas { display: block; width: 100%; cursor: pointer; }
+
+  /* TABLE */
+  .table-section { background: #181818; border: 1px solid #252525; border-radius: 10px; padding: 20px; margin-bottom: 24px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #555; border-bottom: 1px solid #252525; }
+  td { padding: 9px 12px; border-bottom: 1px solid #1e1e1e; color: #ccc; }
+  tr:last-child td { border-bottom: none; }
+  tr.run-row { cursor: pointer; transition: background 0.15s; }
+  tr.run-row:hover td { background: #1c1c1c; }
+  tr.run-row.active td { background: #1a2030; }
+  tr.run-row.active td:first-child { border-left: 3px solid #00cccc; padding-left: 9px; }
+  .week-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #1e2d1e; color: #6bcb77; }
+  .week-badge.pre { background: #1e1e2d; color: #7eb8f7; }
+  .hr-high { color: #f07070; }
+  .hr-ok { color: #6bcb77; }
+  .hr-mid { color: #f0c040; }
+  .row-pb { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 6px; margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
+  .row-pb.pace { background: #1e2d3a; color: #7eb8f7; border: 1px solid #7eb8f740; }
+  .row-pb.hr { background: #1e3a1e; color: #6bcb77; border: 1px solid #6bcb7740; }
+
+  /* HOW IT WORKS */
+  .how { background: #141414; border: 1px solid #222; border-radius: 10px; padding: 20px; margin-bottom: 24px; }
+  .how h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #555; margin-bottom: 12px; }
+  .how p { font-size: 13px; color: #777; line-height: 1.7; }
+
+  /* FOOTER */
+  footer { text-align: center; color: #333; font-size: 12px; padding: 20px 0; }
+
+  /* MOBILE */
+  @media (max-width: 639px) {
+    nav { padding: 0 12px; gap: 8px; }
+    nav .brand { font-size: 13px; }
+    nav a.nav-link { font-size: 11px; padding: 5px 8px; }
+    main { padding: 20px 12px 48px; }
+    h1 { font-size: 18px; }
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-value { font-size: 22px; }
+    .stat-value.lg { font-size: 18px; }
+    .chart-section { padding: 14px 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    canvas { min-width: 480px; }
+    .table-section { padding: 14px 10px; }
+    table { font-size: 12px; }
+    th, td { padding: 7px 8px; }
+    .coach { padding: 14px; }
+    .coach p { font-size: 13px; }
+    .how { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span>🏃</span> Arif's Easy Run vs Avg HR</div>
+  <a class="nav-link" href="https://docs.google.com/spreadsheets/d/1vLDC-slyVKB6uDWwIMkCFq9uxu6PN4-A/edit?gid=352326790" target="_blank">📊 Training Log</a>
+  <a class="nav-link" href="https://t.coros.com/admin/views/activities" target="_blank">⌚ COROS</a>
+</nav>
+
+<main>
+  <h1>Easy Run — Avg Pace vs Avg HR</h1>
+  <p class="subtitle">Tracking aerobic efficiency over time. Lower HR at the same pace = fitness improving.</p>
+  <p class="cache-info" id="cacheInfo">Live data · Last updated: <span id="lastDate"></span> · <span id="runCount"></span> Easy sessions · Updated 12-Apr-26</p>
+
+  <!-- STATS -->
+  <div class="stats" id="statsRow"></div>
+
+  <!-- COACH -->
+  <div class="coach">
+    <div class="coach-header"><span>🎯</span> Coach's Eye</div>
+    <p id="coachText"></p>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-section">
+    <div class="chart-title">Pace &amp; HR Over Time — Easy Runs Only</div>
+    <div class="chart-hint">Click a point or table row to highlight</div>
+    <canvas id="chart" height="220"></canvas>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-section">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Week</th>
+          <th>Dist (km)</th>
+          <th>Pace (min/km)</th>
+          <th>Avg HR (bpm)</th>
+          <th>Menu</th>
+        </tr>
+      </thead>
+      <tbody id="runTable"></tbody>
+    </table>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="how">
+    <h3>How It Works</h3>
+    <p>
+      This dashboard tracks Arif's easy aerobic runs from the COROS Training Hub, logged daily into a Google Sheet.
+      Each morning an automated task reads yesterday's activity, updates the sheet, and redeploys this page to Netlify.
+      Easy runs are identified by Menu labels containing "easy" or "over the hills" (case-insensitive).
+      Week labels: Pre = before 26-Mar-26, Wk 1 = 26-Mar to 1-Apr, then 7-day blocks onward.
+      The chart shows HR as a solid area (cyan) and pace as a dashed line (purple), with week dividers and a linear regression trend for HR.
+      🏅 PB = personal best (fastest pace or lowest HR across all runs). Click any table row or chart point to highlight it.
+    </p>
+  </div>
+</main>
+
+<footer>arepisrunning.netlify.app · Auto-updated daily · Data source: COROS + Google Sheets</footer>
+
+<script>
+let runs = [
+  { date:"7-Mar-26",  week:"Pre",  pace:"6:52", hr:133, dist:10.26, menu:"Easy" },
+  { date:"10-Mar-26", week:"Pre",  pace:"7:16", hr:134, dist:5.56,  menu:"Easy" },
+  { date:"11-Mar-26", week:"Pre",  pace:"7:04", hr:132, dist:5.75,  menu:"Easy" },
+  { date:"14-Mar-26", week:"Pre",  pace:"6:50", hr:134, dist:9.09,  menu:"Easy" },
+  { date:"22-Mar-26", week:"Pre",  pace:"6:49", hr:141, dist:8.84,  menu:"Easy" },
+  { date:"23-Mar-26", week:"Pre",  pace:"6:43", hr:139, dist:9.03,  menu:"Easy" },
+  { date:"24-Mar-26", week:"Pre",  pace:"6:26", hr:145, dist:9.63,  menu:"Easy" },
+  { date:"30-Mar-26", week:"Wk 1", pace:"7:37", hr:134, dist:6.03,  menu:"45' Easy" },
+  { date:"1-Apr-26",  week:"Wk 1", pace:"7:11", hr:131, dist:6.33,  menu:"45' Easy" },
+  { date:"2-Apr-26",  week:"Wk 2", pace:"6:33", hr:146, dist:7.02,  menu:"Over the hills 45'" },
+  { date:"4-Apr-26",  week:"Wk 2", pace:"6:17", hr:145, dist:14.39, menu:"90' Easy" },
+  { date:"6-Apr-26",  week:"Wk 2", pace:"7:11", hr:133, dist:7.03,  menu:"50' Easy" },
+  { date:"9-Apr-26",  week:"Wk 2", pace:"6:48", hr:135, dist:7.40,  menu:"50' Easy" },
+  { date:"10-Apr-26", week:"Wk 2", pace:"6:36", hr:136, dist:7.64,  menu:"Over the hills 50'" },
+  { date:"11-Apr-26", week:"Wk 2", pace:"6:32", hr:136, dist:7.70,  menu:"50' Easy" },
+  { date:"12-Apr-26", week:"Wk 2", pace:"6:31", hr:141, dist:15.41, menu:"100' Easy" },
+];
+
+// --- Helpers ---
+function paceToSec(p) {
+  const [m, s] = p.split(':').map(Number);
+  return m * 60 + s;
+}
+function secToPace(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.round(s % 60);
+  return m + ':' + String(sec).padStart(2, '0');
+}
+function avg(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+
+// --- Personal bests ---
+const hrs = runs.map(r => r.hr);
+const paces = runs.map(r => paceToSec(r.pace));
+const pbHR = Math.min(...hrs);         // lowest HR = best aerobic efficiency
+const pbPaceSec = Math.min(...paces);  // fastest pace = best speed
+const pbHRIdx = hrs.indexOf(pbHR);
+const pbPaceIdx = paces.indexOf(pbPaceSec);
+
+// --- Populate cache info ---
+document.getElementById('lastDate').textContent = runs[runs.length - 1].date;
+document.getElementById('runCount').textContent = runs.length;
+
+// --- Stats ---
+const avgHR = Math.round(avg(hrs));
+const avgPaceSec = avg(paces);
+const totalKm = runs.reduce((s, r) => s + r.dist, 0);
+
+// Trends: compare first half vs second half
+const half = Math.floor(runs.length / 2);
+const firstHrs = hrs.slice(0, half);
+const secondHrs = hrs.slice(half);
+const firstPaces = paces.slice(0, half);
+const secondPaces = paces.slice(half);
+const hrTrend = Math.round(avg(secondHrs) - avg(firstHrs));
+const paceTrend = Math.round(avg(secondPaces) - avg(firstPaces));
+
+const statsRow = document.getElementById('statsRow');
+function statCard(label, value, sub, cls, extra) {
+  return `<div class="stat${extra ? ' ' + extra : ''}"><div class="stat-label">${label}</div><div class="stat-value ${cls || ''}">${value}</div><div class="stat-sub">${sub}</div></div>`;
+}
+function pbStatCard(label, value, sub, cls, pbLabel) {
+  return `<div class="stat pb-card"><div class="stat-label">${label} <span class="pb-badge">🏅 ${pbLabel}</span></div><div class="stat-value ${cls || ''}">${value}</div><div class="stat-sub">${sub}</div></div>`;
+}
+
+statsRow.innerHTML =
+  statCard('Easy Runs', runs.length, 'logged') +
+  statCard('Avg HR', avgHR + ' bpm', 'easy baseline') +
+  statCard('Avg Pace', secToPace(avgPaceSec), 'min/km easy') +
+  statCard('HR Trend', (hrTrend >= 0 ? '+' : '') + hrTrend + ' bpm', 'watch this ↑', hrTrend > 2 ? 'up' : hrTrend < -2 ? 'down' : 'neutral') +
+  pbStatCard('Best Pace', secToPace(pbPaceSec), runs[pbPaceIdx].date, 'down', 'Fastest') +
+  pbStatCard('Best HR', pbHR + ' bpm', runs[pbHRIdx].date, 'down', 'Lowest');
+
+// --- Coach commentary ---
+const lastRun = runs[runs.length - 1];
+const prevRuns = runs.slice(0, -1);
+const prevAvgHR = Math.round(avg(prevRuns.map(r => r.hr)));
+const hrSpread = Math.max(...hrs) - Math.min(...hrs);
+const hrDiff = lastRun.hr - prevAvgHR;
+const halfAvgHR = Math.round(avg(secondHrs));
+const firstAvgHR = Math.round(avg(firstHrs));
+const firstAvgPace = secToPace(Math.round(avg(firstPaces)));
+const secondAvgPace = secToPace(Math.round(avg(secondPaces)));
+
+let commentary = '';
+if (hrTrend > 4) {
+  commentary += `<strong>HR creeping up.</strong> Recent easy runs averaging <strong style="color:#f07070">${hrTrend} bpm higher</strong> than earlier. Could be fatigue, heat, or load — watch 2–3 more sessions. `;
+} else if (hrTrend < -4) {
+  commentary += `<strong>Aerobic fitness building.</strong> HR trending <strong style="color:#6bcb77">${Math.abs(hrTrend)} bpm lower</strong> in recent runs vs earlier — clear sign of adaptation. `;
+} else {
+  commentary += `<strong>HR holding steady.</strong> No significant trend change (${hrTrend > 0 ? '+' : ''}${hrTrend} bpm). Consistent aerobic base. `;
+}
+commentary += `Last run (${lastRun.date}): HR <strong>${lastRun.hr} bpm</strong> — <strong style="color:${hrDiff > 5 ? '#f07070' : hrDiff < -5 ? '#6bcb77' : '#f0c040'}">${hrDiff > 0 ? '+' + hrDiff : hrDiff} bpm ${hrDiff > 0 ? 'above' : 'below'} average</strong>. `;
+commentary += `<strong>${hrSpread} bpm spread</strong> (${Math.min(...hrs)}–${Math.max(...hrs)} bpm) across easy runs. `;
+commentary += `First half avg: ${firstAvgHR} bpm @ ${firstAvgPace}/km → Second half avg: ${halfAvgHR} bpm @ ${secondAvgPace}/km. `;
+commentary += `🏅 PB pace: <strong>${secToPace(pbPaceSec)}/km</strong> on ${runs[pbPaceIdx].date} · PB HR: <strong>${pbHR} bpm</strong> on ${runs[pbHRIdx].date}. `;
+if (Math.abs(hrTrend) <= 4) commentary += `2 weeks in. Aerobic adaptation takes 6–8 weeks — stay patient, stay easy.`;
+
+document.getElementById('coachText').innerHTML = commentary;
+
+// --- Chart ---
+let selectedIdx = null;
+
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+
+function drawChart() {
+  const W = canvas.parentElement.clientWidth - 40;
+  const H = 220;
+  canvas.width = W;
+  canvas.height = H;
+
+  const PAD = { top: 20, right: 60, bottom: 36, left: 44 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+  const n = runs.length;
+
+  // Scales
+  const minHR = Math.min(...hrs) - 8;
+  const maxHR = Math.max(...hrs) + 8;
+  const minPace = Math.min(...paces) - 20;
+  const maxPace = Math.max(...paces) + 20;
+
+  function xPos(i) { return PAD.left + (i / (n - 1)) * chartW; }
+  function hrY(hr) { return PAD.top + chartH - ((hr - minHR) / (maxHR - minHR)) * chartH; }
+  function paceY(sec) { return PAD.top + chartH - ((maxPace - sec) / (maxPace - minPace)) * chartH; }
+
+  // Store for click detection
+  canvas._xPos = xPos;
+  canvas._hrY = hrY;
+  canvas._paceY = paceY;
+  canvas._PAD = PAD;
+  canvas._chartH = chartH;
+  canvas._chartW = chartW;
+
+  // Background
+  ctx.fillStyle = '#181818';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD.top + (chartH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + chartW, y); ctx.stroke();
+  }
+
+  // Week dividers — stronger, with shaded band at top
+  const weeks = [...new Set(runs.map(r => r.week))];
+  weeks.forEach(wk => {
+    const firstIdx = runs.findIndex(r => r.week === wk);
+    if (firstIdx > 0) {
+      const x = xPos(firstIdx) - (xPos(firstIdx) - xPos(firstIdx - 1)) / 2;
+      // Shaded label band
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.fillRect(x, PAD.top, xPos(n - 1) - x + 1, chartH);
+      // Divider line
+      ctx.strokeStyle = '#3a3a3a';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + chartH); ctx.stroke();
+      ctx.setLineDash([]);
+      // Week label
+      ctx.fillStyle = '#555';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(wk, x + 4, PAD.top + 11);
+    } else {
+      // First week label (no divider)
+      const x = xPos(0);
+      ctx.fillStyle = '#444';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(wk, x, PAD.top + 11);
+    }
+  });
+
+  // HR area fill
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), hrY(hrs[0]));
+  for (let i = 1; i < n; i++) ctx.lineTo(xPos(i), hrY(hrs[i]));
+  ctx.lineTo(xPos(n - 1), PAD.top + chartH);
+  ctx.lineTo(xPos(0), PAD.top + chartH);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0, 200, 200, 0.12)';
+  ctx.fill();
+
+  // HR line
+  ctx.beginPath();
+  ctx.strokeStyle = '#00cccc';
+  ctx.lineWidth = 2;
+  ctx.moveTo(xPos(0), hrY(hrs[0]));
+  for (let i = 1; i < n; i++) ctx.lineTo(xPos(i), hrY(hrs[i]));
+  ctx.stroke();
+
+  // HR regression trend line
+  const xArr = runs.map((_, i) => i);
+  const xMean = avg(xArr);
+  const yMean = avg(hrs);
+  let num = 0, den = 0;
+  xArr.forEach((x, i) => { num += (x - xMean) * (hrs[i] - yMean); den += (x - xMean) ** 2; });
+  const slope = den !== 0 ? num / den : 0;
+  const intercept = yMean - slope * xMean;
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(255,100,100,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 3]);
+  ctx.moveTo(xPos(0), hrY(intercept));
+  ctx.lineTo(xPos(n - 1), hrY(slope * (n - 1) + intercept));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Pace dashed line
+  ctx.beginPath();
+  ctx.strokeStyle = '#9966cc';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 4]);
+  ctx.moveTo(xPos(0), paceY(paces[0]));
+  for (let i = 1; i < n; i++) ctx.lineTo(xPos(i), paceY(paces[i]));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Data points + labels
+  runs.forEach((r, i) => {
+    const x = xPos(i);
+    const isSelected = selectedIdx === i;
+    const isPBPace = i === pbPaceIdx;
+    const isPBHR = i === pbHRIdx;
+
+    // Selected run: highlight ring
+    if (isSelected) {
+      ctx.beginPath();
+      ctx.arc(x, hrY(r.hr), 10, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 200, 200, 0.15)';
+      ctx.fill();
+      ctx.strokeStyle = '#00cccc';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // PB pace star marker on pace dot
+    if (isPBPace) {
+      ctx.beginPath();
+      ctx.arc(x, paceY(paces[i]), 7, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(126,184,247,0.2)';
+      ctx.fill();
+      ctx.strokeStyle = '#7eb8f7';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // PB HR: gold ring on HR dot
+    if (isPBHR) {
+      ctx.beginPath();
+      ctx.arc(x, hrY(r.hr), 7, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(107,203,119,0.2)';
+      ctx.fill();
+      ctx.strokeStyle = '#6bcb77';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // HR dot
+    ctx.beginPath();
+    ctx.arc(x, hrY(r.hr), isSelected ? 5 : 4, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected ? '#ffffff' : '#00cccc';
+    ctx.fill();
+
+    // HR label
+    ctx.fillStyle = isSelected ? '#fff' : (isPBHR ? '#6bcb77' : '#00cccc');
+    ctx.font = isSelected ? 'bold 10px sans-serif' : '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(r.hr, x, hrY(r.hr) - 7);
+
+    // PB HR label
+    if (isPBHR) {
+      ctx.fillStyle = '#6bcb77';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText('🏅', x, hrY(r.hr) - 17);
+    }
+
+    // Pace dot
+    ctx.beginPath();
+    ctx.arc(x, paceY(paces[i]), isSelected ? 4 : 3, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected ? '#ffffff' : '#9966cc';
+    ctx.fill();
+
+    // Pace label
+    ctx.fillStyle = isSelected ? '#fff' : (isPBPace ? '#7eb8f7' : '#9966cc');
+    ctx.font = isSelected ? 'bold 10px sans-serif' : '10px sans-serif';
+    ctx.fillText(r.pace, x, paceY(paces[i]) + 14);
+
+    // PB pace label
+    if (isPBPace) {
+      ctx.fillStyle = '#7eb8f7';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText('🏅', x, paceY(paces[i]) + 24);
+    }
+
+    // Tooltip for selected: vertical line + date
+    if (isSelected) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(x, PAD.top);
+      ctx.lineTo(x, PAD.top + chartH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  });
+
+  // X axis labels (dates)
+  ctx.fillStyle = '#555';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  runs.forEach((r, i) => {
+    ctx.fillStyle = selectedIdx === i ? '#fff' : '#555';
+    ctx.fillText(r.date.replace('-26', ''), xPos(i), H - 6);
+  });
+
+  // Y axis — HR (left)
+  ctx.fillStyle = '#00cccc';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  [minHR + 8, minHR + (maxHR - minHR) / 2, maxHR - 8].forEach(v => {
+    ctx.fillText(Math.round(v), PAD.left - 4, hrY(v) + 3);
+  });
+  ctx.save();
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillText('HR (bpm)', -(H / 2), 12);
+  ctx.restore();
+
+  // Y axis — Pace (right)
+  ctx.fillStyle = '#9966cc';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  [minPace + 20, minPace + (maxPace - minPace) / 2, maxPace - 20].forEach(v => {
+    ctx.fillText(secToPace(Math.round(v)), PAD.left + chartW + 4, paceY(v) + 3);
+  });
+  ctx.save();
+  ctx.rotate(Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#9966cc';
+  ctx.fillText('Pace (min/km)', H / 2, -(W - 12));
+  ctx.restore();
+
+  // Legend
+  const lx = PAD.left + chartW - 160;
+  const ly = PAD.top + 6;
+  ctx.fillStyle = '#00cccc'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillRect(lx, ly, 16, 3); ctx.fillText('HR', lx + 20, ly + 5);
+  ctx.strokeStyle = '#9966cc'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
+  ctx.beginPath(); ctx.moveTo(lx + 55, ly + 1); ctx.lineTo(lx + 71, ly + 1); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#9966cc'; ctx.fillText('Pace', lx + 75, ly + 5);
+  ctx.strokeStyle = 'rgba(255,100,100,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
+  ctx.beginPath(); ctx.moveTo(lx + 118, ly + 1); ctx.lineTo(lx + 134, ly + 1); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(255,100,100,0.7)'; ctx.fillText('Trend', lx + 138, ly + 5);
+}
+
+drawChart();
+
+// --- Chart click handler ---
+canvas.addEventListener('click', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const xPos = canvas._xPos;
+  const n = runs.length;
+  let closest = -1;
+  let minDist = Infinity;
+  for (let i = 0; i < n; i++) {
+    const d = Math.abs(xPos(i) - mx);
+    if (d < minDist) { minDist = d; closest = i; }
+  }
+  if (minDist < 30) {
+    selectedIdx = selectedIdx === closest ? null : closest;
+  } else {
+    selectedIdx = null;
+  }
+  drawChart();
+  syncTableHighlight();
+});
+
+// --- Run table ---
+const tbody = document.getElementById('runTable');
+const tableRows = [];
+
+[...runs].reverse().forEach((r, revIdx) => {
+  const origIdx = runs.length - 1 - revIdx;
+  const isHighHR = r.hr >= 145;
+  const isLowHR = r.hr <= 134;
+  const hrClass = isHighHR ? 'hr-high' : isLowHR ? 'hr-ok' : 'hr-mid';
+  const wkClass = r.week === 'Pre' ? 'pre' : '';
+  const isPBPace = origIdx === pbPaceIdx;
+  const isPBHR = origIdx === pbHRIdx;
+  const pacePB = isPBPace ? '<span class="row-pb pace">🏅 Fastest</span>' : '';
+  const hrPB = isPBHR ? '<span class="row-pb hr">🏅 Lowest HR</span>' : '';
+
+  const tr = document.createElement('tr');
+  tr.className = 'run-row';
+  tr.dataset.idx = origIdx;
+  tr.innerHTML = `
+    <td>${r.date}</td>
+    <td><span class="week-badge ${wkClass}">${r.week}</span></td>
+    <td>${r.dist.toFixed(2)}</td>
+    <td>${r.pace}${pacePB}</td>
+    <td class="${hrClass}">${r.hr}${hrPB}</td>
+    <td>${r.menu}</td>
+  `;
+  tr.addEventListener('click', function() {
+    const idx = parseInt(this.dataset.idx);
+    selectedIdx = selectedIdx === idx ? null : idx;
+    drawChart();
+    syncTableHighlight();
+    if (selectedIdx !== null) {
+      canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+  tbody.appendChild(tr);
+  tableRows.push(tr);
+});
+
+function syncTableHighlight() {
+  tableRows.forEach(tr => {
+    const idx = parseInt(tr.dataset.idx);
+    tr.classList.toggle('active', idx === selectedIdx);
+  });
+}
+</script>
+</body>
+</html>
