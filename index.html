@@ -1,602 +1,644 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arif's Easy Run vs Avg HR</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Running · The quiet math of aerobic patience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0d0d0d; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.6; }
-  a { color: #7eb8f7; text-decoration: none; }
-  a:hover { text-decoration: underline; }
+:root { color-scheme: light; }
+html, body { margin:0; padding:0; background:#fafaf7; }
+.page { max-width: 1100px; margin: 0 auto; padding: 20px 20px 48px; }
+.theme-dark {
+  --bg: #0f1012;
+  --bg-2: #161719;
+  --bg-3: #1f2023;
+  --ink: #f2efe8;
+  --ink-muted: #a6a49c;
+  --ink-faint: #6b6962;
+  --line: #2a2b2e;
+  --coral: #d8674e;
+  --amber: #e8c25e;
+  --good: #8bb28a;
+  --bad: #c66b6b;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --serif: 'Fraunces', Georgia, serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  border-radius: 16px;
+  padding: 28px 28px 44px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+}
+.overline { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); font-weight: 500; }
+.mono { font-family: var(--mono); }
+.good { color: var(--good); }
+.bad { color: var(--bad); }
 
-  /* NAV */
-  nav { position: sticky; top: 0; z-index: 100; background: #141414; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; padding: 0 24px; height: 52px; gap: 16px; }
-  nav .brand { font-weight: 700; font-size: 15px; color: #fff; margin-right: auto; display: flex; align-items: center; gap: 8px; }
-  nav .brand span { font-size: 20px; }
-  nav a.nav-link { color: #aaa; font-size: 13px; padding: 6px 12px; border-radius: 6px; background: #1e1e1e; border: 1px solid #2e2e2e; display: flex; align-items: center; gap: 6px; }
-  nav a.nav-link:hover { background: #252525; color: #fff; text-decoration: none; }
+/* Masthead */
+.mast {
+  position: relative; isolation: isolate; overflow: hidden;
+  border-radius: 12px; border: 1px solid var(--line);
+  padding: 44px 32px 36px; margin-bottom: 18px;
+  min-height: 260px; display: flex; align-items: flex-end;
+  background: linear-gradient(135deg, #1a1214 0%, #15161a 60%, #10120f 100%);
+}
+.mast::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 20%, oklch(0.55 0.15 30 / 0.18), transparent 55%),
+    radial-gradient(ellipse at 80% 80%, oklch(0.45 0.1 200 / 0.12), transparent 50%);
+  z-index: -1;
+}
+.mast-kicker { color: var(--coral); margin-bottom: 14px; }
+.mast h1 {
+  font-family: var(--serif); font-weight: 500;
+  font-size: clamp(30px, 4.5vw, 52px);
+  line-height: 1.05; letter-spacing: -0.02em;
+  margin: 0 0 16px; max-width: 720px;
+}
+.mast-dek { font-family: var(--serif); font-size: 17px; line-height: 1.5; color: var(--ink-muted); max-width: 540px; margin: 0 0 18px; }
+.mast-meta { display: flex; align-items: center; gap: 10px; color: var(--ink-muted); font-size: 10px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 3px oklch(0.55 0.2 30 / 0.2); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.4 } }
 
-  /* MAIN */
-  main { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
-  h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-  .subtitle { color: #888; font-size: 13px; margin-bottom: 6px; }
-  .cache-info { color: #555; font-size: 12px; margin-bottom: 28px; }
+/* Ticker */
+.ticker { margin-bottom: 20px; }
+.ticker-head { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.ticker-bar { display: flex; gap: 3px; height: 28px; border-radius: 4px; overflow: hidden; background: var(--bg-2); padding: 3px; }
+.chip { flex-grow: 1; flex-basis: 0; display: flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer; font-family: var(--mono); font-size: 9px; color: #fff; opacity: 0.85; transition: opacity 0.15s, transform 0.15s; }
+.chip:hover, .chip.sel { opacity: 1; transform: scaleY(1.1); }
+.chip.sel { outline: 1.5px solid var(--ink); }
 
-  /* STATS ROW */
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-  @media (min-width: 640px) { .stats { grid-template-columns: repeat(6, 1fr); } }
-  .stat { background: #181818; border: 1px solid #252525; border-radius: 10px; padding: 14px 16px; }
-  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #666; margin-bottom: 6px; }
-  .stat-value { font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
-  .stat-value.lg { font-size: 22px; }
-  .stat-sub { font-size: 11px; color: #555; margin-top: 4px; }
-  .stat-value.up { color: #f07070; }
-  .stat-value.down { color: #6bcb77; }
-  .stat-value.neutral { color: #f0c040; }
+/* Grid of cards */
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; margin-bottom: 18px; }
+.card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+.hero { grid-column: span 4; }
+.eff  { grid-column: span 4; }
+.stat { grid-column: span 2; }
+.pb   { grid-column: span 2; }
+@media (max-width: 900px) {
+  .hero, .eff { grid-column: span 6; }
+  .stat, .pb { grid-column: span 3; }
+}
+@media (max-width: 560px) {
+  .hero, .eff, .stat, .pb { grid-column: span 6; }
+}
+.card .overline { margin-bottom: 8px; }
+.num { font-family: var(--mono); font-size: 32px; font-weight: 500; letter-spacing: -0.02em; }
+.num .unit { font-size: 11px; color: var(--ink-muted); margin-left: 6px; font-weight: 400; }
+.num-sub { font-family: var(--mono); font-size: 10px; color: var(--ink-muted); margin-top: 6px; letter-spacing: 0.02em; }
+.hero-num { font-size: 44px; color: var(--ink); font-family: var(--mono); font-weight: 500; letter-spacing: -0.02em; }
+.pb .pb-chip { display: inline-block; font-family: var(--mono); font-size: 8px; letter-spacing: 0.14em; padding: 1px 5px; background: oklch(0.55 0.18 30 / 0.15); color: var(--coral); border-radius: 3px; margin-left: 6px; vertical-align: 2px; }
 
-  /* PB BADGES in stats */
-  .stat.pb-card { border-color: #3a3a1a; background: #1a1a12; }
-  .pb-badge { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 1px 6px; border-radius: 8px; background: #f0c04022; color: #f0c040; border: 1px solid #f0c04044; margin-left: 4px; vertical-align: middle; position: relative; top: -2px; }
+/* Efficiency ring */
+.eff-row { display: flex; align-items: center; gap: 20px; }
+.eff-text { flex: 1; }
+.eff-score { font-family: var(--mono); font-size: 36px; letter-spacing: -0.02em; margin: 4px 0 2px; }
+.eff-score span { font-size: 18px; color: var(--ink-muted); margin-left: 2px; }
+.eff-sub { font-size: 12px; color: var(--ink-muted); }
+.ring { width: 84px; height: 84px; position: relative; flex-shrink: 0; }
+.ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.footnote { font-family: var(--mono); font-size: 10px; color: var(--ink-faint); margin-top: 14px; letter-spacing: 0.02em; }
 
-  /* COACH */
-  .coach { background: #141c14; border: 1px solid #1e3a1e; border-radius: 10px; padding: 18px 20px; margin-bottom: 24px; }
-  .coach-header { display: flex; align-items: center; gap: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #5a9a5a; margin-bottom: 10px; }
-  .coach-header span { font-size: 18px; }
-  .coach p { font-size: 14px; color: #c8c8c8; line-height: 1.7; }
+/* Chart card */
+.chart-card { padding: 20px 22px; margin-bottom: 18px; }
+.chart-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.chart-sub { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
+.chart-wrap { position: relative; height: 280px; }
+.chart-wrap.scatter { height: 320px; }
 
-  /* CHART */
-  .chart-section { background: #181818; border: 1px solid #252525; border-radius: 10px; padding: 20px; margin-bottom: 24px; }
-  .chart-title { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #666; margin-bottom: 4px; }
-  .chart-hint { font-size: 11px; color: #444; margin-bottom: 14px; }
-  canvas { display: block; width: 100%; cursor: pointer; }
+/* Coach */
+.coach { background: linear-gradient(90deg, oklch(0.55 0.18 30 / 0.08), transparent); border-left: 2px solid var(--coral); border-radius: 8px; padding: 16px 20px; display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+.coach-msg { font-family: var(--serif); font-size: 17px; line-height: 1.4; margin-top: 2px; }
+.coach-tags { margin-left: auto; display: flex; gap: 14px; font-size: 11px; color: var(--ink-muted); }
+.coach-tags strong { color: var(--ink); font-weight: 600; }
 
-  /* TABLE */
-  .table-section { background: #181818; border: 1px solid #252525; border-radius: 10px; padding: 20px; margin-bottom: 24px; overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; padding: 8px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #555; border-bottom: 1px solid #252525; }
-  td { padding: 9px 12px; border-bottom: 1px solid #1e1e1e; color: #ccc; }
-  tr:last-child td { border-bottom: none; }
-  tr.run-row { cursor: pointer; transition: background 0.15s; }
-  tr.run-row:hover td { background: #1c1c1c; }
-  tr.run-row.active td { background: #1a2030; }
-  tr.run-row.active td:first-child { border-left: 3px solid #00cccc; padding-left: 9px; }
-  .week-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #1e2d1e; color: #6bcb77; }
-  .week-badge.pre { background: #1e1e2d; color: #7eb8f7; }
-  .hr-high { color: #f07070; }
-  .hr-ok { color: #6bcb77; }
-  .hr-mid { color: #f0c040; }
-  .row-pb { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 6px; margin-left: 5px; vertical-align: middle; position: relative; top: -1px; }
-  .row-pb.pace { background: #1e2d3a; color: #7eb8f7; border: 1px solid #7eb8f740; }
-  .row-pb.hr { background: #1e3a1e; color: #6bcb77; border: 1px solid #6bcb7740; }
+/* Zones */
+.zones { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 12px; }
+@media (max-width: 900px) { .zones { grid-template-columns: repeat(3, 1fr); } }
+.zone { background: var(--bg-3); border: 1px solid var(--line); border-radius: 8px; padding: 12px 10px; text-align: left; cursor: pointer; transition: background 0.15s, border-color 0.15s; font-family: inherit; color: inherit; }
+.zone:hover { border-color: var(--zone-color); }
+.zone.active { background: var(--bg); border-color: var(--zone-color); box-shadow: 0 0 0 1px var(--zone-color); }
+.zone-head { display: flex; flex-direction: column; margin-bottom: 8px; }
+.zone-name { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.zone-range { font-family: var(--mono); font-size: 9px; color: var(--ink-muted); letter-spacing: 0.08em; margin-top: 2px; }
+.zone-num { font-family: var(--mono); font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+.zone-bar { height: 3px; background: var(--bg-2); border-radius: 2px; overflow: hidden; }
+.zone-fill { height: 100%; transition: width 0.6s ease-out; }
+.zone-pct { font-family: var(--mono); font-size: 9px; color: var(--ink-faint); margin-top: 5px; letter-spacing: 0.06em; }
 
-  /* HOW IT WORKS */
-  .how { background: #141414; border: 1px solid #222; border-radius: 10px; padding: 20px; margin-bottom: 24px; }
-  .how h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #555; margin-bottom: 12px; }
-  .how p { font-size: 13px; color: #777; line-height: 1.7; }
+.thresholds { display: flex; gap: 14px; font-family: var(--mono); font-size: 11px; color: var(--ink-muted); align-items: center; flex-wrap: wrap; }
+.thresholds strong { color: var(--ink); font-weight: 600; }
+.clear-btn { background: none; border: 1px solid var(--line); color: var(--ink-muted); padding: 3px 8px; border-radius: 3px; cursor: pointer; font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; }
+.clear-btn:hover { border-color: var(--coral); color: var(--coral); }
 
-  /* FOOTER */
-  footer { text-align: center; color: #333; font-size: 12px; padding: 20px 0; }
+/* Session log */
+.log { display: flex; flex-direction: column; gap: 1px; }
+.log-row { display: grid; grid-template-columns: 72px 64px 1fr 60px 44px 44px; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 4px; background: none; border: none; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
+.log-row.body:hover { background: var(--bg-3); }
+.log-row.body.sel { background: oklch(0.55 0.18 30 / 0.12); }
+.log-row.head { padding-top: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; cursor: default; }
+.log-date { font-size: 11px; font-weight: 500; }
+.log-week { font-size: 10px; color: var(--ink-muted); }
+.log-menu { font-size: 13px; line-height: 1.3; }
+.log-val { font-size: 12px; text-align: right; }
+.log-val.pb { color: var(--coral); font-weight: 600; }
+.log-val em { font-style: normal; margin-left: 2px; }
+.log-empty { text-align: center; color: var(--ink-muted); font-family: var(--mono); font-size: 12px; padding: 24px; }
+.log-type { display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 5px; border-radius: 3px; margin-right: 8px; border: 1px solid currentColor; opacity: 0.85; vertical-align: 1px; }
+.type-easy    { color: oklch(0.78 0.11 210); }
+.type-long    { color: oklch(0.78 0.14 155); }
+.type-hills   { color: oklch(0.82 0.15 95); }
+.type-fartlek { color: oklch(0.82 0.15 75); }
+.type-tempo   { color: oklch(0.72 0.17 40); }
+.log-double { display: inline-block; font-family: var(--mono); font-style: normal; font-size: 9px; font-weight: 600; color: var(--coral); background: oklch(0.68 0.19 25 / 0.12); padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
 
-  /* MOBILE */
-  @media (max-width: 639px) {
-    nav { padding: 0 12px; gap: 8px; }
-    nav .brand { font-size: 13px; }
-    nav a.nav-link { font-size: 11px; padding: 5px 8px; }
-    main { padding: 20px 12px 48px; }
-    h1 { font-size: 18px; }
-    .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .stat-value { font-size: 22px; }
-    .stat-value.lg { font-size: 18px; }
-    .chart-section { padding: 14px 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    canvas { min-width: 480px; }
-    .table-section { padding: 14px 10px; }
-    table { font-size: 12px; }
-    th, td { padding: 7px 8px; }
-    .coach { padding: 14px; }
-    .coach p { font-size: 13px; }
-    .how { padding: 14px; }
-  }
+.section-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px; gap: 14px; flex-wrap: wrap; }
+.site-foot { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); letter-spacing: 0.08em; }
+.site-foot a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); padding-bottom: 1px; transition: color 0.15s, border-color 0.15s; }
+.site-foot a:hover { color: var(--coral); border-bottom-color: var(--coral); }
+
+@media (max-width: 720px) {
+  .page { padding: 12px 12px 36px; }
+  .theme-dark { padding: 18px 16px 30px; border-radius: 12px; }
+  .mast { padding: 28px 20px 22px; min-height: 200px; margin-bottom: 14px; }
+  .mast h1 { font-size: 26px; line-height: 1.1; margin-bottom: 12px; }
+  .mast-dek { font-size: 15px; line-height: 1.45; margin-bottom: 14px; }
+  .grid { gap: 10px; margin-bottom: 14px; }
+  .card { padding: 14px 14px; }
+  .chart-card { padding: 14px 14px; margin-bottom: 14px; }
+  .chart-wrap { height: 220px; }
+  .chart-wrap.scatter { height: 240px; }
+  .num { font-size: 26px; }
+  .hero-num { font-size: 32px; }
+  .eff-score { font-size: 28px; }
+  .ring { width: 64px; height: 64px; }
+  .ring svg { width: 64px; height: 64px; }
+  .coach { padding: 14px 16px; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+  .coach-msg { font-size: 15px; }
+  .coach-tags { margin-left: 0; flex-basis: 100%; gap: 12px; }
+  .log-row { grid-template-columns: 60px 1fr 50px 36px 36px; gap: 8px; padding: 9px 8px; }
+  .log-row > :nth-child(2) { display: none; }
+  .log-menu { font-size: 12px; }
+  .log-val { font-size: 11px; }
+}
 </style>
 </head>
 <body>
+<div class="page">
+<div class="theme-dark">
 
-<nav>
-  <div class="brand"><span>🏃</span> Arif's Easy Run vs Avg HR</div>
-  <a class="nav-link" href="https://docs.google.com/spreadsheets/d/1vLDC-slyVKB6uDWwIMkCFq9uxu6PN4-A/edit?gid=352326790" target="_blank">📊 Training Log</a>
-  <a class="nav-link" href="https://t.coros.com/admin/views/activities" target="_blank">⌚ COROS</a>
-</nav>
-
-<main>
-  <h1>Easy Run — Avg Pace vs Avg HR</h1>
-  <p class="subtitle">Tracking aerobic efficiency over time. Lower HR at the same pace = fitness improving.</p>
-  <p class="cache-info" id="cacheInfo">Live data · Last updated: <span id="lastDate"></span> · <span id="runCount"></span> Easy sessions · Updated 18-Apr-26</p>
-
-  <!-- STATS -->
-  <div class="stats" id="statsRow"></div>
-
-  <!-- COACH -->
-  <div class="coach">
-    <div class="coach-header"><span>🎯</span> Coach's Eye</div>
-    <p id="coachText"></p>
+<section class="mast">
+  <div>
+    <div class="overline mast-kicker">Easy-run block · Mar–Apr 2026</div>
+    <h1>The quiet math of aerobic patience.</h1>
+    <p class="mast-dek"><span id="mast-count">21</span> sessions, <span id="mast-km">—</span> kilometres, one slow-turning question — is the heart doing less work for the same pace?</p>
+    <div class="mast-meta">
+      <div class="dot"></div>
+      <span class="overline">LIVE · <span id="mast-week">WEEK 4</span> · <span id="mast-sessions">21</span> SESSIONS</span>
+      <span class="mono" style="margin-left:8px;">UPDATED <span id="mast-last">—</span></span>
+    </div>
   </div>
+</section>
 
-  <!-- CHART -->
-  <div class="chart-section">
-    <div class="chart-title">Pace &amp; HR Over Time — Easy Runs Only</div>
-    <div class="chart-hint">Click a point or table row to highlight</div>
-    <canvas id="chart" height="220"></canvas>
+<div class="ticker">
+  <div class="ticker-head">
+    <span class="overline">KILOMETER TICKER</span>
+    <span class="mono" style="color:var(--coral);font-size:11px;"><span id="ticker-km">—</span> KM TOTAL</span>
   </div>
+  <div class="ticker-bar" id="ticker-bar"></div>
+</div>
 
-  <!-- TABLE -->
-  <div class="table-section">
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Week</th>
-          <th>Dist (km)</th>
-          <th>Pace (min/km)</th>
-          <th>Avg HR (bpm)</th>
-          <th>Menu</th>
-        </tr>
-      </thead>
-      <tbody id="runTable"></tbody>
-    </table>
+<div class="card chart-card">
+  <div class="chart-head">
+    <div>
+      <div class="overline">Pace &amp; heart, side by side</div>
+      <div class="chart-sub">Coral = HR (right axis) · amber = pace (left, lower is faster)</div>
+    </div>
   </div>
+  <div class="chart-wrap"><canvas id="hrPaceChart"></canvas></div>
+</div>
 
-  <!-- HOW IT WORKS -->
-  <div class="how">
-    <h3>How It Works</h3>
-    <p>
-      This dashboard tracks Arif's easy aerobic runs from the COROS Training Hub, logged daily into a Google Sheet.
-      Each morning an automated task reads yesterday's activity, updates the sheet, and redeploys this page to Netlify.
-      Easy runs are identified by Menu labels containing "easy" or "over the hills" (case-insensitive).
-      Week labels: Pre = before 26-Mar-26, Wk 1 = 26-Mar to 1-Apr, then 7-day blocks onward.
-      The chart shows HR as a solid area (cyan) and pace as a dashed line (purple), with week dividers and a linear regression trend for HR.
-      🏅 PB = personal best (fastest pace or lowest HR across all runs). Click any table row or chart point to highlight it.
-    </p>
+<div class="grid">
+  <div class="card hero">
+    <div class="overline">Avg pace · easy</div>
+    <div class="hero-num" id="avg-pace">—</div>
+    <div class="num-sub" id="pace-delta">—</div>
   </div>
-</main>
+  <div class="card eff">
+    <div class="eff-row">
+      <div class="eff-text">
+        <div class="overline">Aerobic efficiency</div>
+        <div class="eff-score" id="eff-score">—</div>
+        <div class="eff-sub" id="eff-sub">—</div>
+      </div>
+      <div class="ring">
+        <svg width="84" height="84" viewBox="0 0 84 84">
+          <circle cx="42" cy="42" r="38" stroke="var(--bg-3)" stroke-width="7" fill="none"/>
+          <circle id="eff-ring" cx="42" cy="42" r="38" stroke="var(--good)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="238.76" transform="rotate(-90 42 42)"/>
+        </svg>
+        <div class="ring-label" id="eff-ring-label">—</div>
+      </div>
+    </div>
+    <div class="footnote" id="eff-foot">—</div>
+  </div>
+  <div class="card stat">
+    <div class="overline">Avg HR</div>
+    <div class="num"><span id="avg-hr">—</span><span class="unit">bpm</span></div>
+    <div class="num-sub" id="hr-sub">—</div>
+  </div>
+  <div class="card stat">
+    <div class="overline">Volume</div>
+    <div class="num"><span id="total-km">—</span><span class="unit">km</span></div>
+    <div class="num-sub" id="vol-sub">—</div>
+  </div>
+  <div class="card pb">
+    <div class="overline">Best pace <span class="pb-chip">BLOCK</span></div>
+    <div class="num" style="color:var(--coral);" id="pb-pace">—</div>
+    <div class="num-sub" id="pb-pace-sub">—</div>
+  </div>
+  <div class="card pb">
+    <div class="overline">Lowest HR <span class="pb-chip">BLOCK</span></div>
+    <div class="num" style="color:var(--good);" id="pb-hr">—</div>
+    <div class="num-sub" id="pb-hr-sub">—</div>
+  </div>
+</div>
 
-<footer>arepisrunning.netlify.app · Auto-updated daily · Data source: COROS + Google Sheets</footer>
+<div class="card chart-card">
+  <div class="chart-head">
+    <div>
+      <div class="overline">Aerobic efficiency</div>
+      <div class="chart-sub">Every run is a dot. Lower-left = faster at lower HR (the sweet spot)</div>
+    </div>
+  </div>
+  <div class="chart-wrap scatter"><canvas id="scatter"></canvas></div>
+</div>
+
+<div class="coach">
+  <div>
+    <div class="overline" style="color:var(--coral);">Coach read · next session</div>
+    <div class="coach-msg" id="coach-msg">—</div>
+  </div>
+  <div class="coach-tags mono">
+    <div>LT HR <strong>173</strong></div>
+    <div>MAX <strong>195</strong></div>
+    <div>RESTING <strong>49</strong></div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:18px;">
+  <div class="section-head">
+    <div>
+      <div class="overline">Sessions per COROS HR zone</div>
+      <div class="chart-sub" id="zone-sub">Click a zone to filter the log below</div>
+    </div>
+    <div class="thresholds">
+      <span>LT <strong>173</strong></span>
+      <span>MAX <strong>195</strong></span>
+      <span>REST <strong>49</strong></span>
+      <button id="clear-zone" class="clear-btn" style="display:none;">CLEAR ↺</button>
+    </div>
+  </div>
+  <div class="zones" id="zones"></div>
+</div>
+
+<div class="card">
+  <div class="section-head">
+    <div>
+      <div class="overline">Session log</div>
+      <div class="chart-sub" id="log-sub">All runs, latest first. Click a row to highlight it.</div>
+    </div>
+  </div>
+  <div class="log" id="log"></div>
+</div>
+
+<footer class="site-foot">
+  <span>Aerobic block · auto-synced from Strava</span>
+  <a href="https://arifrashih.github.io/helloyou/" target="_blank" rel="noopener">arifrashih.github.io/helloyou →</a>
+</footer>
+
+</div>
+</div>
 
 <script>
-let runs = [
-  { date:"7-Mar-26",  week:"Pre",  pace:"6:52", hr:133, dist:10.26, menu:"Easy" },
-  { date:"10-Mar-26", week:"Pre",  pace:"7:16", hr:134, dist:5.56,  menu:"Easy" },
-  { date:"11-Mar-26", week:"Pre",  pace:"7:04", hr:132, dist:5.75,  menu:"Easy" },
-  { date:"14-Mar-26", week:"Pre",  pace:"6:50", hr:134, dist:9.09,  menu:"Easy" },
-  { date:"22-Mar-26", week:"Pre",  pace:"6:49", hr:141, dist:8.84,  menu:"Easy" },
-  { date:"23-Mar-26", week:"Pre",  pace:"6:43", hr:139, dist:9.03,  menu:"Easy" },
-  { date:"24-Mar-26", week:"Pre",  pace:"6:26", hr:145, dist:9.63,  menu:"Easy" },
-  { date:"30-Mar-26", week:"Wk 1", pace:"7:37", hr:134, dist:6.03,  menu:"45' Easy" },
-  { date:"1-Apr-26",  week:"Wk 1", pace:"7:11", hr:131, dist:6.33,  menu:"45' Easy" },
-  { date:"2-Apr-26",  week:"Wk 2", pace:"6:33", hr:146, dist:7.02,  menu:"Over the hills 45'" },
-  { date:"4-Apr-26",  week:"Wk 2", pace:"6:17", hr:145, dist:14.39, menu:"90' Easy" },
-  { date:"6-Apr-26",  week:"Wk 2", pace:"7:11", hr:133, dist:7.03,  menu:"50' Easy" },
-  { date:"9-Apr-26",  week:"Wk 2", pace:"6:48", hr:135, dist:7.40,  menu:"50' Easy" },
-  { date:"10-Apr-26", week:"Wk 2", pace:"6:36", hr:136, dist:7.64,  menu:"Over the hills 50'" },
-  { date:"11-Apr-26", week:"Wk 2", pace:"6:32", hr:136, dist:7.70,  menu:"50' Easy" },
-  { date:"12-Apr-26", week:"Wk 2", pace:"6:31", hr:141, dist:15.41, menu:"100' Easy" },
-  { date:"13-Apr-26", week:"Wk 3", pace:"6:26", hr:136, dist:8.60,  menu:"55' Easy" },
-  { date:"16-Apr-26", week:"Wk 3", pace:"6:31", hr:146, dist:8.82,  menu:"55' Easy" },
-  { date:"18-Apr-26", week:"Wk 3", pace:"6:25", hr:136, dist:8.63,  menu:"55' Easy" },
+const RUNS = [
+  { date:"22-Mar-26", week:"Week 1", pace:"6:48", hr:141, dist:8.84, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"23-Mar-26", week:"Week 2", pace:"6:43", hr:139, dist:9.03, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"24-Mar-26", week:"Week 2", pace:"6:26", hr:145, dist:9.63, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"25-Mar-26", week:"Week 2", pace:"6:59", hr:148, dist:4.32, cadence:null, menu:"Afternoon Run", type:"Easy", notes:"", double:false },
+  { date:"27-Mar-26", week:"Week 2", pace:"6:32", hr:144, dist:9.26, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"29-Mar-26", week:"Week 2", pace:"6:21", hr:156, dist:21.29, cadence:null, menu:"Morning Run", type:"Long", notes:"Elevation: 303m", double:false },
+  { date:"30-Mar-26", week:"Week 3", pace:"7:37", hr:134, dist:6.03, cadence:null, menu:"Evening Run", type:"Easy", notes:"", double:false },
+  { date:"1-Apr-26", week:"Week 3", pace:"7:11", hr:131, dist:6.33, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"2-Apr-26", week:"Week 3", pace:"6:33", hr:146, dist:7.02, cadence:null, menu:"Morning Run", type:"Easy", notes:"Elevation: 106m", double:false },
+  { date:"4-Apr-26", week:"Week 3", pace:"6:17", hr:145, dist:14.39, cadence:null, menu:"Morning Run", type:"Long", notes:"", double:false },
+  { date:"5-Apr-26", week:"Week 3", pace:"7:19", hr:126, dist:4.11, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"6-Apr-26", week:"Week 4", pace:"7:11", hr:133, dist:7.03, cadence:null, menu:"Evening Run", type:"Easy", notes:"", double:false },
+  { date:"8-Apr-26", week:"Week 4", pace:"6:48", hr:135, dist:7.4, cadence:null, menu:"Afternoon Run", type:"Easy", notes:"", double:false },
+  { date:"10-Apr-26", week:"Week 4", pace:"6:36", hr:136, dist:7.64, cadence:null, menu:"Morning Run", type:"Easy", notes:"Elevation: 83m", double:false },
+  { date:"11-Apr-26", week:"Week 4", pace:"6:32", hr:136, dist:7.7, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"12-Apr-26", week:"Week 4", pace:"6:30", hr:141, dist:15.41, cadence:null, menu:"Morning Run", type:"Long", notes:"", double:false },
+  { date:"13-Apr-26", week:"Week 5", pace:"6:26", hr:136, dist:8.6, cadence:null, menu:"Afternoon Run", type:"Easy", notes:"", double:false },
+  { date:"15-Apr-26", week:"Week 5", pace:"6:43", hr:137, dist:6.71, cadence:null, menu:"Afternoon Run", type:"Easy", notes:"", double:false },
+  { date:"16-Apr-26", week:"Week 5", pace:"6:31", hr:146, dist:8.81, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"18-Apr-26", week:"Week 5", pace:"6:25", hr:136, dist:8.63, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
+  { date:"19-Apr-26", week:"Week 5", pace:"6:40", hr:141, dist:15.08, cadence:null, menu:"Morning Run", type:"Long", notes:"", double:false },
+  { date:"23-Apr-26", week:"Week 6", pace:"6:42", hr:144, dist:18.18, cadence:null, menu:"Morning Run", type:"Easy", notes:"Elevation: 73m \u00b7 double day", double:true },
+  { date:"24-Apr-26", week:"Week 6", pace:"6:27", hr:136, dist:9.34, cadence:null, menu:"Morning Run", type:"Easy", notes:"", double:false },
 ];
 
-// --- Helpers ---
-function paceToSec(p) {
-  const [m, s] = p.split(':').map(Number);
-  return m * 60 + s;
-}
-function secToPace(s) {
-  const m = Math.floor(s / 60);
-  const sec = Math.round(s % 60);
-  return m + ':' + String(sec).padStart(2, '0');
-}
-function avg(arr) { return arr.reduce((a, b) => a + b, 0) / arr.length; }
+const paceToSec = p => { const [m,s] = p.split(':').map(Number); return m*60 + s; };
+const secToPace = s => { const m = Math.floor(s/60); const sec = Math.round(s%60); return m + ':' + String(sec).padStart(2,'0'); };
+const avg = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+const parseDate = str => { const [d,mon,y] = str.split('-'); const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11}; return new Date(2000+parseInt(y), months[mon], parseInt(d)); };
 
-// --- Personal bests ---
-const hrs = runs.map(r => r.hr);
-const paces = runs.map(r => paceToSec(r.pace));
-const pbHR = Math.min(...hrs);         // lowest HR = best aerobic efficiency
-const pbPaceSec = Math.min(...paces);  // fastest pace = best speed
-const pbHRIdx = hrs.indexOf(pbHR);
-const pbPaceIdx = paces.indexOf(pbPaceSec);
+RUNS.forEach((r,i) => {
+  r.idx = i;
+  r.paceSec = paceToSec(r.pace);
+  r.dateObj = parseDate(r.date);
+  const speedMps = 1000 / r.paceSec;
+  r.efficiency = (speedMps / r.hr) * 1000;
+  r.durationMin = (r.dist * r.paceSec) / 60;
+});
 
-// --- Populate cache info ---
-document.getElementById('lastDate').textContent = runs[runs.length - 1].date;
-document.getElementById('runCount').textContent = runs.length;
-
-// --- Stats ---
-const avgHR = Math.round(avg(hrs));
+const easy = RUNS.filter(r => ['Easy','Long','Hills'].includes(r.type));
+const hrs = RUNS.map(r => r.hr);
+const paces = RUNS.map(r => r.paceSec);
+const bestEasyPace = easy.reduce((b,r) => r.paceSec < b.paceSec ? r : b, easy[0]);
+const bestEasyHR = easy.reduce((b,r) => r.hr < b.hr ? r : b, easy[0]);
+const totalKm = RUNS.reduce((s,r) => s + r.dist, 0);
 const avgPaceSec = avg(paces);
-const totalKm = runs.reduce((s, r) => s + r.dist, 0);
+const avgHR = Math.round(avg(hrs));
+const half = Math.floor(RUNS.length / 2);
+const firstEff = avg(RUNS.slice(0, half).map(r => r.efficiency));
+const lastEff = avg(RUNS.slice(half).map(r => r.efficiency));
+const effChange = ((lastEff - firstEff) / firstEff) * 100;
+const hrTrend = Math.round(avg(RUNS.slice(half).map(r=>r.hr)) - avg(RUNS.slice(0,half).map(r=>r.hr)));
+const last3 = RUNS.slice(-3);
+const prior3 = RUNS.slice(-6,-3);
+const roll3HR = Math.round(avg(last3.map(r=>r.hr)) - avg(prior3.map(r=>r.hr)));
+const roll3Pace = Math.round(avg(last3.map(r=>r.paceSec)) - avg(prior3.map(r=>r.paceSec)));
+const lastRun = RUNS[RUNS.length - 1];
 
-// Trends: compare first half vs second half
-const half = Math.floor(runs.length / 2);
-const firstHrs = hrs.slice(0, half);
-const secondHrs = hrs.slice(half);
-const firstPaces = paces.slice(0, half);
-const secondPaces = paces.slice(half);
-const hrTrend = Math.round(avg(secondHrs) - avg(firstHrs));
-const paceTrend = Math.round(avg(secondPaces) - avg(firstPaces));
+const LT_HR = 173;
+const zones = [
+  { name:'Z1', title:'Recovery',            range:'<138',    min:0,   max:137, color:'oklch(0.78 0.11 210)' },
+  { name:'Z2', title:'Aerobic endurance',   range:'138–156', min:138, max:156, color:'oklch(0.78 0.14 155)' },
+  { name:'Z3', title:'Aerobic power',       range:'157–164', min:157, max:164, color:'oklch(0.82 0.15 95)'  },
+  { name:'Z4', title:'Threshold',           range:'165–176', min:165, max:176, color:'oklch(0.82 0.15 75)'  },
+  { name:'Z5', title:'Anaerobic endurance', range:'177–183', min:177, max:183, color:'oklch(0.72 0.17 40)'  },
+  { name:'Z6', title:'Anaerobic power',     range:'>183',    min:184, max:999, color:'oklch(0.68 0.19 25)'  },
+];
+zones.forEach(z => {
+  z.count = RUNS.filter(r => r.hr >= z.min && r.hr <= z.max).length;
+  z.pct = (z.count / RUNS.length) * 100;
+});
 
-const statsRow = document.getElementById('statsRow');
-function statCard(label, value, sub, cls, extra) {
-  return `<div class="stat${extra ? ' ' + extra : ''}"><div class="stat-label">${label}</div><div class="stat-value ${cls || ''}">${value}</div><div class="stat-sub">${sub}</div></div>`;
-}
-function pbStatCard(label, value, sub, cls, pbLabel) {
-  return `<div class="stat pb-card"><div class="stat-label">${label} <span class="pb-badge">🏅 ${pbLabel}</span></div><div class="stat-value ${cls || ''}">${value}</div><div class="stat-sub">${sub}</div></div>`;
-}
-
-statsRow.innerHTML =
-  statCard('Easy Runs', runs.length, 'logged') +
-  statCard('Avg HR', avgHR + ' bpm', 'easy baseline') +
-  statCard('Avg Pace', secToPace(avgPaceSec), 'min/km easy') +
-  statCard('HR Trend', (hrTrend >= 0 ? '+' : '') + hrTrend + ' bpm', 'watch this ↑', hrTrend > 2 ? 'up' : hrTrend < -2 ? 'down' : 'neutral') +
-  pbStatCard('Best Pace', secToPace(pbPaceSec), runs[pbPaceIdx].date, 'down', 'Fastest') +
-  pbStatCard('Best HR', pbHR + ' bpm', runs[pbHRIdx].date, 'down', 'Lowest');
-
-// --- Coach commentary ---
-const lastRun = runs[runs.length - 1];
-const prevRuns = runs.slice(0, -1);
-const prevAvgHR = Math.round(avg(prevRuns.map(r => r.hr)));
-const hrSpread = Math.max(...hrs) - Math.min(...hrs);
-const hrDiff = lastRun.hr - prevAvgHR;
-const halfAvgHR = Math.round(avg(secondHrs));
-const firstAvgHR = Math.round(avg(firstHrs));
-const firstAvgPace = secToPace(Math.round(avg(firstPaces)));
-const secondAvgPace = secToPace(Math.round(avg(secondPaces)));
-
-let commentary = '';
-if (hrTrend > 4) {
-  commentary += `<strong>HR creeping up.</strong> Recent easy runs averaging <strong style="color:#f07070">${hrTrend} bpm higher</strong> than earlier. Could be fatigue, heat, or load — watch 2–3 more sessions. `;
-} else if (hrTrend < -4) {
-  commentary += `<strong>Aerobic fitness building.</strong> HR trending <strong style="color:#6bcb77">${Math.abs(hrTrend)} bpm lower</strong> in recent runs vs earlier — clear sign of adaptation. `;
-} else {
-  commentary += `<strong>HR holding steady.</strong> No significant trend change (${hrTrend > 0 ? '+' : ''}${hrTrend} bpm). Consistent aerobic base. `;
-}
-commentary += `Last run (${lastRun.date}): HR <strong>${lastRun.hr} bpm</strong> — <strong style="color:${hrDiff > 5 ? '#f07070' : hrDiff < -5 ? '#6bcb77' : '#f0c040'}">${hrDiff > 0 ? '+' + hrDiff : hrDiff} bpm ${hrDiff > 0 ? 'above' : 'below'} average</strong>. `;
-commentary += `<strong>${hrSpread} bpm spread</strong> (${Math.min(...hrs)}–${Math.max(...hrs)} bpm) across easy runs. `;
-commentary += `First half avg: ${firstAvgHR} bpm @ ${firstAvgPace}/km → Second half avg: ${halfAvgHR} bpm @ ${secondAvgPace}/km. `;
-commentary += `🏅 PB pace: <strong>${secToPace(pbPaceSec)}/km</strong> on ${runs[pbPaceIdx].date} · PB HR: <strong>${pbHR} bpm</strong> on ${runs[pbHRIdx].date}. `;
-if (Math.abs(hrTrend) <= 4) commentary += `2 weeks in. Aerobic adaptation takes 6–8 weeks — stay patient, stay easy.`;
-
-document.getElementById('coachText').innerHTML = commentary;
-
-// --- Chart ---
+// --- State ---
 let selectedIdx = null;
+let filterZone = null;
 
-const canvas = document.getElementById('chart');
-const ctx = canvas.getContext('2d');
+// --- Masthead + stats ---
+document.getElementById('mast-count').textContent = RUNS.length;
+document.getElementById('mast-km').textContent = totalKm.toFixed(0);
+document.getElementById('mast-sessions').textContent = RUNS.length;
+document.getElementById('mast-week').textContent = lastRun.week.toUpperCase();
+document.getElementById('mast-last').textContent = lastRun.date.toUpperCase();
+document.getElementById('ticker-km').textContent = totalKm.toFixed(1);
 
-function drawChart() {
-  const W = canvas.parentElement.clientWidth - 40;
-  const H = 220;
-  canvas.width = W;
-  canvas.height = H;
+document.getElementById('avg-pace').textContent = secToPace(Math.round(avgPaceSec)) + ' /km';
+document.getElementById('pace-delta').innerHTML = (roll3Pace <= 0 ? '▼' : '▲') + ' ' + Math.abs(roll3Pace) + 's last 3 vs prior 3';
+document.getElementById('pace-delta').className = 'num-sub ' + (roll3Pace < 0 ? 'good' : roll3Pace > 0 ? 'bad' : '');
 
-  const PAD = { top: 20, right: 60, bottom: 36, left: 44 };
-  const chartW = W - PAD.left - PAD.right;
-  const chartH = H - PAD.top - PAD.bottom;
-  const n = runs.length;
+document.getElementById('avg-hr').textContent = avgHR;
+document.getElementById('hr-sub').innerHTML = (roll3HR <= 0 ? '▼' : '▲') + ' ' + Math.abs(roll3HR) + ' last 3 · range ' + Math.min(...hrs) + '–' + Math.max(...hrs);
 
-  // Scales
-  const minHR = Math.min(...hrs) - 8;
-  const maxHR = Math.max(...hrs) + 8;
-  const minPace = Math.min(...paces) - 20;
-  const maxPace = Math.max(...paces) + 20;
+document.getElementById('total-km').textContent = totalKm.toFixed(1);
+document.getElementById('vol-sub').textContent = (totalKm / RUNS.length).toFixed(1) + ' km/run avg';
 
-  function xPos(i) { return PAD.left + (i / (n - 1)) * chartW; }
-  function hrY(hr) { return PAD.top + chartH - ((hr - minHR) / (maxHR - minHR)) * chartH; }
-  function paceY(sec) { return PAD.top + chartH - ((maxPace - sec) / (maxPace - minPace)) * chartH; }
+document.getElementById('pb-pace').textContent = secToPace(bestEasyPace.paceSec);
+document.getElementById('pb-pace-sub').textContent = bestEasyPace.date + ' · ' + bestEasyPace.dist.toFixed(1) + ' km';
 
-  // Store for click detection
-  canvas._xPos = xPos;
-  canvas._hrY = hrY;
-  canvas._paceY = paceY;
-  canvas._PAD = PAD;
-  canvas._chartH = chartH;
-  canvas._chartW = chartW;
+document.getElementById('pb-hr').textContent = bestEasyHR.hr;
+document.getElementById('pb-hr-sub').textContent = bestEasyHR.date + ' · ' + bestEasyHR.pace + '/km';
 
-  // Background
-  ctx.fillStyle = '#181818';
-  ctx.fillRect(0, 0, W, H);
+const effSign = effChange >= 0 ? '+' : '−';
+document.getElementById('eff-score').innerHTML = effSign + Math.abs(effChange).toFixed(1) + '<span>%</span>';
+document.getElementById('eff-sub').textContent = (effChange > 0 ? 'Improving' : effChange < 0 ? 'Regressing' : 'Flat') + ' since block start';
+document.getElementById('eff-foot').textContent = `Speed per heartbeat · first ${half} runs vs last ${RUNS.length - half}`;
 
-  // Grid lines
-  ctx.strokeStyle = '#222';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) {
-    const y = PAD.top + (chartH / 4) * i;
-    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + chartW, y); ctx.stroke();
-  }
+const ringLen = 238.76;
+const ringPct = Math.min(1, Math.abs(effChange) / 8);
+const ring = document.getElementById('eff-ring');
+ring.style.stroke = effChange >= 0 ? 'var(--good)' : 'var(--bad)';
+setTimeout(() => { ring.style.transition = 'stroke-dashoffset 1s ease-out'; ring.style.strokeDashoffset = ringLen * (1 - ringPct); }, 50);
+document.getElementById('eff-ring-label').textContent = effSign + Math.abs(effChange).toFixed(0) + '%';
+document.getElementById('eff-ring-label').style.color = effChange >= 0 ? 'var(--good)' : 'var(--bad)';
 
-  // Week dividers — stronger, with shaded band at top
-  const weeks = [...new Set(runs.map(r => r.week))];
-  weeks.forEach(wk => {
-    const firstIdx = runs.findIndex(r => r.week === wk);
-    if (firstIdx > 0) {
-      const x = xPos(firstIdx) - (xPos(firstIdx) - xPos(firstIdx - 1)) / 2;
-      // Shaded label band
-      ctx.fillStyle = 'rgba(255,255,255,0.03)';
-      ctx.fillRect(x, PAD.top, xPos(n - 1) - x + 1, chartH);
-      // Divider line
-      ctx.strokeStyle = '#3a3a3a';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + chartH); ctx.stroke();
-      ctx.setLineDash([]);
-      // Week label
-      ctx.fillStyle = '#555';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(wk, x + 4, PAD.top + 11);
-    } else {
-      // First week label (no divider)
-      const x = xPos(0);
-      ctx.fillStyle = '#444';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(wk, x, PAD.top + 11);
-    }
-  });
+// Coach message
+const coachMsg = hrTrend < -4
+  ? `Fitness building. HR down ${Math.abs(hrTrend)} bpm across the block. Stay patient — 60 min easy, keep HR in Z1–Z2 (sub-156).`
+  : hrTrend > 4
+  ? `HR creeping up ${hrTrend} bpm. Recovery day — 40 min pure Z1, hard cap at 138.`
+  : `Base holding. Keep the cadence: 55 min easy, stay below ${LT_HR - 17} (top of Z2), cadence ~180.`;
+document.getElementById('coach-msg').textContent = coachMsg;
 
-  // HR area fill
-  ctx.beginPath();
-  ctx.moveTo(xPos(0), hrY(hrs[0]));
-  for (let i = 1; i < n; i++) ctx.lineTo(xPos(i), hrY(hrs[i]));
-  ctx.lineTo(xPos(n - 1), PAD.top + chartH);
-  ctx.lineTo(xPos(0), PAD.top + chartH);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(0, 200, 200, 0.12)';
-  ctx.fill();
-
-  // HR line
-  ctx.beginPath();
-  ctx.strokeStyle = '#00cccc';
-  ctx.lineWidth = 2;
-  ctx.moveTo(xPos(0), hrY(hrs[0]));
-  for (let i = 1; i < n; i++) ctx.lineTo(xPos(i), hrY(hrs[i]));
-  ctx.stroke();
-
-  // HR regression trend line
-  const xArr = runs.map((_, i) => i);
-  const xMean = avg(xArr);
-  const yMean = avg(hrs);
-  let num = 0, den = 0;
-  xArr.forEach((x, i) => { num += (x - xMean) * (hrs[i] - yMean); den += (x - xMean) ** 2; });
-  const slope = den !== 0 ? num / den : 0;
-  const intercept = yMean - slope * xMean;
-  ctx.beginPath();
-  ctx.strokeStyle = 'rgba(255,100,100,0.5)';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([6, 3]);
-  ctx.moveTo(xPos(0), hrY(intercept));
-  ctx.lineTo(xPos(n - 1), hrY(slope * (n - 1) + intercept));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Pace dashed line
-  ctx.beginPath();
-  ctx.strokeStyle = '#9966cc';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5, 4]);
-  ctx.moveTo(xPos(0), paceY(paces[0]));
-  for (let i = 1; i < n; i++) ctx.lineTo(xPos(i), paceY(paces[i]));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Data points + labels
-  runs.forEach((r, i) => {
-    const x = xPos(i);
-    const isSelected = selectedIdx === i;
-    const isPBPace = i === pbPaceIdx;
-    const isPBHR = i === pbHRIdx;
-
-    // Selected run: highlight ring
-    if (isSelected) {
-      ctx.beginPath();
-      ctx.arc(x, hrY(r.hr), 10, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0, 200, 200, 0.15)';
-      ctx.fill();
-      ctx.strokeStyle = '#00cccc';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // PB pace star marker on pace dot
-    if (isPBPace) {
-      ctx.beginPath();
-      ctx.arc(x, paceY(paces[i]), 7, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(126,184,247,0.2)';
-      ctx.fill();
-      ctx.strokeStyle = '#7eb8f7';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // PB HR: gold ring on HR dot
-    if (isPBHR) {
-      ctx.beginPath();
-      ctx.arc(x, hrY(r.hr), 7, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(107,203,119,0.2)';
-      ctx.fill();
-      ctx.strokeStyle = '#6bcb77';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // HR dot
-    ctx.beginPath();
-    ctx.arc(x, hrY(r.hr), isSelected ? 5 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = isSelected ? '#ffffff' : '#00cccc';
-    ctx.fill();
-
-    // HR label
-    ctx.fillStyle = isSelected ? '#fff' : (isPBHR ? '#6bcb77' : '#00cccc');
-    ctx.font = isSelected ? 'bold 10px sans-serif' : '10px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(r.hr, x, hrY(r.hr) - 7);
-
-    // PB HR label
-    if (isPBHR) {
-      ctx.fillStyle = '#6bcb77';
-      ctx.font = 'bold 9px sans-serif';
-      ctx.fillText('🏅', x, hrY(r.hr) - 17);
-    }
-
-    // Pace dot
-    ctx.beginPath();
-    ctx.arc(x, paceY(paces[i]), isSelected ? 4 : 3, 0, Math.PI * 2);
-    ctx.fillStyle = isSelected ? '#ffffff' : '#9966cc';
-    ctx.fill();
-
-    // Pace label
-    ctx.fillStyle = isSelected ? '#fff' : (isPBPace ? '#7eb8f7' : '#9966cc');
-    ctx.font = isSelected ? 'bold 10px sans-serif' : '10px sans-serif';
-    ctx.fillText(r.pace, x, paceY(paces[i]) + 14);
-
-    // PB pace label
-    if (isPBPace) {
-      ctx.fillStyle = '#7eb8f7';
-      ctx.font = 'bold 9px sans-serif';
-      ctx.fillText('🏅', x, paceY(paces[i]) + 24);
-    }
-
-    // Tooltip for selected: vertical line + date
-    if (isSelected) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath();
-      ctx.moveTo(x, PAD.top);
-      ctx.lineTo(x, PAD.top + chartH);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-  });
-
-  // X axis labels (dates)
-  ctx.fillStyle = '#555';
-  ctx.font = '10px sans-serif';
-  ctx.textAlign = 'center';
-  runs.forEach((r, i) => {
-    ctx.fillStyle = selectedIdx === i ? '#fff' : '#555';
-    ctx.fillText(r.date.replace('-26', ''), xPos(i), H - 6);
-  });
-
-  // Y axis — HR (left)
-  ctx.fillStyle = '#00cccc';
-  ctx.font = '10px sans-serif';
-  ctx.textAlign = 'right';
-  [minHR + 8, minHR + (maxHR - minHR) / 2, maxHR - 8].forEach(v => {
-    ctx.fillText(Math.round(v), PAD.left - 4, hrY(v) + 3);
-  });
-  ctx.save();
-  ctx.rotate(-Math.PI / 2);
-  ctx.textAlign = 'center';
-  ctx.fillText('HR (bpm)', -(H / 2), 12);
-  ctx.restore();
-
-  // Y axis — Pace (right)
-  ctx.fillStyle = '#9966cc';
-  ctx.font = '10px sans-serif';
-  ctx.textAlign = 'left';
-  [minPace + 20, minPace + (maxPace - minPace) / 2, maxPace - 20].forEach(v => {
-    ctx.fillText(secToPace(Math.round(v)), PAD.left + chartW + 4, paceY(v) + 3);
-  });
-  ctx.save();
-  ctx.rotate(Math.PI / 2);
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#9966cc';
-  ctx.fillText('Pace (min/km)', H / 2, -(W - 12));
-  ctx.restore();
-
-  // Legend
-  const lx = PAD.left + chartW - 160;
-  const ly = PAD.top + 6;
-  ctx.fillStyle = '#00cccc'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
-  ctx.fillRect(lx, ly, 16, 3); ctx.fillText('HR', lx + 20, ly + 5);
-  ctx.strokeStyle = '#9966cc'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
-  ctx.beginPath(); ctx.moveTo(lx + 55, ly + 1); ctx.lineTo(lx + 71, ly + 1); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = '#9966cc'; ctx.fillText('Pace', lx + 75, ly + 5);
-  ctx.strokeStyle = 'rgba(255,100,100,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
-  ctx.beginPath(); ctx.moveTo(lx + 118, ly + 1); ctx.lineTo(lx + 134, ly + 1); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = 'rgba(255,100,100,0.7)'; ctx.fillText('Trend', lx + 138, ly + 5);
-}
-
-drawChart();
-
-// --- Chart click handler ---
-canvas.addEventListener('click', function(e) {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const mx = (e.clientX - rect.left) * scaleX;
-  const xPos = canvas._xPos;
-  const n = runs.length;
-  let closest = -1;
-  let minDist = Infinity;
-  for (let i = 0; i < n; i++) {
-    const d = Math.abs(xPos(i) - mx);
-    if (d < minDist) { minDist = d; closest = i; }
-  }
-  if (minDist < 30) {
-    selectedIdx = selectedIdx === closest ? null : closest;
-  } else {
-    selectedIdx = null;
-  }
-  drawChart();
-  syncTableHighlight();
+// --- Ticker ---
+const tickerBar = document.getElementById('ticker-bar');
+RUNS.forEach(r => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.idx = r.idx;
+  chip.style.flexGrow = r.dist;
+  chip.style.background = r.hr >= 145 ? 'oklch(0.68 0.18 25 / 0.7)' : r.hr <= 134 ? 'oklch(0.78 0.14 155 / 0.7)' : 'oklch(0.82 0.15 75 / 0.7)';
+  chip.textContent = r.dist.toFixed(1);
+  chip.title = `${r.date} · ${r.dist.toFixed(2)}km · ${r.pace}/km · ${r.hr}bpm`;
+  chip.addEventListener('click', () => setSelected(r.idx === selectedIdx ? null : r.idx));
+  tickerBar.appendChild(chip);
 });
 
-// --- Run table ---
-const tbody = document.getElementById('runTable');
-const tableRows = [];
-
-[...runs].reverse().forEach((r, revIdx) => {
-  const origIdx = runs.length - 1 - revIdx;
-  const isHighHR = r.hr >= 145;
-  const isLowHR = r.hr <= 134;
-  const hrClass = isHighHR ? 'hr-high' : isLowHR ? 'hr-ok' : 'hr-mid';
-  const wkClass = r.week === 'Pre' ? 'pre' : '';
-  const isPBPace = origIdx === pbPaceIdx;
-  const isPBHR = origIdx === pbHRIdx;
-  const pacePB = isPBPace ? '<span class="row-pb pace">🏅 Fastest</span>' : '';
-  const hrPB = isPBHR ? '<span class="row-pb hr">🏅 Lowest HR</span>' : '';
-
-  const tr = document.createElement('tr');
-  tr.className = 'run-row';
-  tr.dataset.idx = origIdx;
-  tr.innerHTML = `
-    <td>${r.date}</td>
-    <td><span class="week-badge ${wkClass}">${r.week}</span></td>
-    <td>${r.dist.toFixed(2)}</td>
-    <td>${r.pace}${pacePB}</td>
-    <td class="${hrClass}">${r.hr}${hrPB}</td>
-    <td>${r.menu}</td>
+// --- Zones grid ---
+const zonesEl = document.getElementById('zones');
+zones.forEach(z => {
+  const btn = document.createElement('button');
+  btn.className = 'zone';
+  btn.dataset.zone = z.name;
+  btn.style.setProperty('--zone-color', z.color);
+  btn.innerHTML = `
+    <div class="zone-head">
+      <span class="zone-name" style="color:${z.color}">${z.name} · ${z.title}</span>
+      <span class="zone-range">${z.range}</span>
+    </div>
+    <div class="zone-num">${z.count}</div>
+    <div class="zone-bar"><div class="zone-fill" style="width:${z.pct}%;background:${z.color};"></div></div>
+    <div class="zone-pct">${z.pct.toFixed(0)}% of runs</div>
   `;
-  tr.addEventListener('click', function() {
-    const idx = parseInt(this.dataset.idx);
-    selectedIdx = selectedIdx === idx ? null : idx;
-    drawChart();
-    syncTableHighlight();
-    if (selectedIdx !== null) {
-      canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  });
-  tbody.appendChild(tr);
-  tableRows.push(tr);
+  btn.addEventListener('click', () => setZoneFilter(filterZone && filterZone.name === z.name ? null : z));
+  zonesEl.appendChild(btn);
 });
+document.getElementById('clear-zone').addEventListener('click', () => setZoneFilter(null));
 
-function syncTableHighlight() {
-  tableRows.forEach(tr => {
-    const idx = parseInt(tr.dataset.idx);
-    tr.classList.toggle('active', idx === selectedIdx);
+// --- Session log ---
+const logEl = document.getElementById('log');
+function renderLog() {
+  let rows = filterZone ? RUNS.filter(r => r.hr >= filterZone.min && r.hr <= filterZone.max) : RUNS.slice();
+  rows.sort((a,b) => b.dateObj - a.dateObj);
+  logEl.innerHTML = '';
+  const head = document.createElement('div');
+  head.className = 'log-row head';
+  head.innerHTML = `
+    <span class="overline">Date</span>
+    <span class="overline">Week</span>
+    <span class="overline">Menu</span>
+    <span class="overline" style="text-align:right;">Pace</span>
+    <span class="overline" style="text-align:right;">HR</span>
+    <span class="overline" style="text-align:right;">Km</span>
+  `;
+  logEl.appendChild(head);
+  if (rows.length === 0) {
+    const e = document.createElement('div');
+    e.className = 'log-empty';
+    e.textContent = 'No runs fall into this zone.';
+    logEl.appendChild(e);
+    return;
+  }
+  rows.forEach(r => {
+    const isSel = selectedIdx === r.idx;
+    const isPBPace = bestEasyPace.idx === r.idx;
+    const isPBHR = bestEasyHR.idx === r.idx;
+    const btn = document.createElement('button');
+    btn.className = 'log-row body' + (isSel ? ' sel' : '');
+    btn.dataset.idx = r.idx;
+    if (r.notes) btn.title = r.notes;
+    btn.innerHTML = `
+      <span class="mono log-date">${r.date.replace('-26','')}${r.double ? '<em class="log-double">2×</em>' : ''}</span>
+      <span class="mono log-week">${r.week}</span>
+      <span class="log-menu"><span class="log-type type-${r.type.toLowerCase()}">${r.type}</span>${r.menu}</span>
+      <span class="mono log-val${isPBPace ? ' pb' : ''}">${r.pace}${isPBPace ? '<em>★</em>' : ''}</span>
+      <span class="mono log-val${isPBHR ? ' pb' : ''}">${r.hr}${isPBHR ? '<em>★</em>' : ''}</span>
+      <span class="mono log-val">${r.dist.toFixed(1)}</span>
+    `;
+    btn.addEventListener('click', () => setSelected(r.idx === selectedIdx ? null : r.idx));
+    logEl.appendChild(btn);
   });
 }
+renderLog();
+
+function setZoneFilter(z) {
+  filterZone = z;
+  document.querySelectorAll('.zone').forEach(el => el.classList.toggle('active', z && el.dataset.zone === z.name));
+  document.getElementById('clear-zone').style.display = z ? 'inline-block' : 'none';
+  document.getElementById('zone-sub').textContent = z ? `Filtering log below to ${z.name} · ${z.title}` : 'Click a zone to filter the log below';
+  document.getElementById('log-sub').textContent = z ? `Filtered to ${z.name} · ${z.title}` : 'All runs, latest first. Click a row to highlight it.';
+  renderLog();
+}
+
+function setSelected(idx) {
+  selectedIdx = idx;
+  document.querySelectorAll('.chip').forEach(el => el.classList.toggle('sel', Number(el.dataset.idx) === idx));
+  document.querySelectorAll('.log-row.body').forEach(el => el.classList.toggle('sel', Number(el.dataset.idx) === idx));
+  if (hrPaceChart) {
+    hrPaceChart.setActiveElements(idx === null ? [] : [
+      { datasetIndex: 0, index: idx },
+      { datasetIndex: 1, index: idx }
+    ]);
+    hrPaceChart.update();
+  }
+  if (scatterChart) {
+    const colors = RUNS.map((r,i) => i === idx ? '#fff' : 'rgba(216,103,78,0.92)');
+    const radii  = RUNS.map((r,i) => i === idx ? 8 : 5);
+    scatterChart.data.datasets[0].backgroundColor = colors;
+    scatterChart.data.datasets[0].pointRadius = radii;
+    scatterChart.update();
+  }
+}
+
+// --- Charts ---
+const INK = '#f2efe8', MUTED = '#a6a49c', FAINT = '#6b6962', LINE = '#2a2b2e';
+const CORAL = '#d8674e', AMBER = '#e8c25e', GOOD = '#8bb28a';
+
+let hrPaceChart, scatterChart;
+
+window.addEventListener('load', () => {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.color = MUTED;
+  Chart.defaults.font.family = "'JetBrains Mono', ui-monospace, monospace";
+  Chart.defaults.font.size = 10;
+
+  const labels = RUNS.map(r => r.date.replace('-26',''));
+  const hrData = RUNS.map(r => r.hr);
+  const paceData = RUNS.map(r => r.paceSec);
+
+  hrPaceChart = new Chart(document.getElementById('hrPaceChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'HR (bpm)', data: hrData, borderColor: CORAL, backgroundColor: CORAL, yAxisID: 'hr', tension: 0.3, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2 },
+        { label: 'Pace (sec/km)', data: paceData, borderColor: AMBER, backgroundColor: AMBER, yAxisID: 'pace', tension: 0.3, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: MUTED, boxHeight: 4, font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: '#1f2023', borderColor: LINE, borderWidth: 1, padding: 10,
+          titleColor: INK, bodyColor: MUTED,
+          callbacks: {
+            afterTitle: ctx => RUNS[ctx[0].dataIndex].menu,
+            label: ctx => ctx.datasetIndex === 0 ? `HR: ${ctx.parsed.y} bpm` : `Pace: ${secToPace(ctx.parsed.y)}/km`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: LINE, drawBorder: false }, ticks: { color: FAINT, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+        hr: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { color: CORAL, callback: v => v + ' bpm' }, title: { display: true, text: 'HR (bpm)', color: CORAL } },
+        pace: { type: 'linear', position: 'left', reverse: true, grid: { color: LINE, drawBorder: false }, ticks: { color: AMBER, callback: v => secToPace(v) }, title: { display: true, text: 'Pace / km', color: AMBER } },
+      },
+      onClick: (e, elems) => { if (elems.length) setSelected(elems[0].index); }
+    }
+  });
+
+  scatterChart = new Chart(document.getElementById('scatter'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Sessions',
+        data: RUNS.map((r,i) => ({ x: r.paceSec, y: r.hr, idx: i })),
+        backgroundColor: 'rgba(216,103,78,0.85)',
+        borderColor: '#0f1012',
+        borderWidth: 1.5,
+        pointRadius: 5, pointHoverRadius: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1f2023', borderColor: LINE, borderWidth: 1, padding: 10,
+          titleColor: INK, bodyColor: MUTED,
+          callbacks: {
+            title: ctx => { const r = RUNS[ctx[0].raw.idx]; return r.date + ' · ' + r.week; },
+            label: ctx => { const r = RUNS[ctx.raw.idx]; return [`Pace: ${r.pace}/km`, `HR: ${r.hr} bpm`, `${r.dist.toFixed(1)} km · ${r.type}`]; }
+          }
+        }
+      },
+      scales: {
+        x: { reverse: true, grid: { color: LINE }, ticks: { color: FAINT, callback: v => secToPace(Math.round(v)) }, title: { display: true, text: 'Pace / km (← faster)', color: MUTED } },
+        y: { grid: { color: LINE }, ticks: { color: FAINT }, title: { display: true, text: 'HR (bpm)', color: MUTED } }
+      },
+      onClick: (e, elems) => { if (elems.length) setSelected(elems[0].element.$context.raw.idx); }
+    }
+  });
+});
 </script>
 </body>
 </html>
