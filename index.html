@@ -99,7 +99,7 @@ html, body { margin:0; padding:0; background:#fafaf7; }
 <body>
 <div class="page"><div class="theme-dark">
 <section class="mast"><div>
-  <div class="overline mast-kicker">Aerobic block · Mar–May 2026 · Strava</div>
+  <div class="overline mast-kicker">Aerobic block · Mar–Apr 2026 · Strava</div>
   <h1>The quiet math of aerobic patience.</h1>
   <p class="mast-dek"><span id="mast-count">—</span> sessions, <span id="mast-km">—</span> kilometres, one slow-turning question — is the heart doing less work for the same pace?</p>
   <div class="mast-meta">
@@ -140,6 +140,23 @@ html, body { margin:0; padding:0; background:#fafaf7; }
     <div><div class="overline" style="color:var(--coral);">Coach read · next session</div><div class="coach-msg" id="coach-msg">—</div></div>
     <div class="coach-tags mono"><div>LT HR <strong>173</strong></div><div>MAX <strong>195</strong></div><div>RESTING <strong>49</strong></div></div>
   </div>
+
+  <!-- COROS live panels — only rendered in the Cowork artifact -->
+  <div class="card chart-card" id="rhr-panel" style="display:none;">
+    <div class="chart-head">
+      <div><div class="overline">Resting heart rate · COROS</div><div class="chart-sub">Daily resting HR · lower over time = aerobic adaptation working</div></div>
+      <div class="mono" style="font-size:11px;color:var(--good);"><span id="rhr-today">—</span> bpm <span id="rhr-trend" style="font-size:10px;color:var(--ink-muted);">today</span></div>
+    </div>
+    <div class="chart-wrap"><canvas id="rhrChart"></canvas></div>
+  </div>
+  <div class="card chart-card" id="hrv-panel" style="display:none;">
+    <div class="chart-head">
+      <div><div class="overline">HRV · heart rate variability · COROS</div><div class="chart-sub">Daily avg · shaded band = your personal normal range · above = well recovered</div></div>
+      <div class="mono" style="font-size:11px;"><span id="hrv-today">—</span> ms · <span id="hrv-status" style="color:var(--ink-muted);">—</span></div>
+    </div>
+    <div class="chart-wrap"><canvas id="hrvChart"></canvas></div>
+  </div>
+
   <div class="card" style="margin-bottom:18px;">
     <div class="section-head"><div><div class="overline">Sessions per HR zone</div><div class="chart-sub" id="zone-sub">Click a zone to filter the log below</div></div><div class="thresholds"><span>LT <strong>173</strong></span><span>MAX <strong>195</strong></span><span>REST <strong>49</strong></span><button id="clear-zone" class="clear-btn" style="display:none;">CLEAR ↺</button></div></div>
     <div class="zones" id="zones"></div>
@@ -150,54 +167,93 @@ html, body { margin:0; padding:0; background:#fafaf7; }
   </div>
 </div>
 <footer class="site-foot">
-  <span>Aerobic block · Mar–May 2026</span>
+  <span>Aerobic block · Mar–Apr 2026</span>
   <a href="https://docs.google.com/spreadsheets/d/1vLDC-slyVKB6uDWwIMkCFq9uxu6PN4-A/edit?gid=352326790#gid=352326790" target="_blank" rel="noopener">Training Log →</a>
   <a href="https://arifrashih.github.io/helloyou/" target="_blank" rel="noopener">arifrashih.github.io/helloyou →</a>
 </footer>
 </div></div>
 
 <script>
+// ── Strava aerobic runs · Mar–Apr 2026 (UTC+8, elapsed_time pace) ────────────
+// Week anchor: Mon 23-Mar-26 = Week 1
 const RUNS_EMBEDDED = [
   // ── Week 1: 23–29 Mar ───────────────────────────────────────────────────
-  {date:'23-Mar-26',week:'Week 1',pace:'6:43',hr:139,dist:9.03, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'24-Mar-26',week:'Week 1',pace:'6:26',hr:145,dist:9.63, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'27-Mar-26',week:'Week 1',pace:'6:32',hr:144,dist:9.26, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'29-Mar-26',week:'Week 1',pace:'6:51',hr:156,dist:21.29,menu:'Long Run',   type:'Long',notes:'Elevation: 303m',            double:false},
+  {date:'23-Mar-26',week:'Week 1',pace:'6:43',hr:139,dist:9.03, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'24-Mar-26',week:'Week 1',pace:'6:26',hr:145,dist:9.63, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'27-Mar-26',week:'Week 1',pace:'6:32',hr:144,dist:9.26, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'29-Mar-26',week:'Week 1',pace:'6:51',hr:156,dist:21.29,menu:'Long Run',   type:'Long',notes:'Elevation: 303m',           double:false},
   // ── Week 2: 30 Mar–5 Apr ────────────────────────────────────────────────
-  {date:'30-Mar-26',week:'Week 2',pace:'7:37',hr:134,dist:6.03, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'1-Apr-26', week:'Week 2',pace:'7:11',hr:131,dist:6.33, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'2-Apr-26', week:'Week 2',pace:'6:33',hr:146,dist:7.02, menu:'Morning Run',type:'Easy',notes:'Elevation: 106m',            double:false},
-  {date:'4-Apr-26', week:'Week 2',pace:'7:21',hr:145,dist:14.39,menu:'Long Run',   type:'Long',notes:'',                           double:false},
-  {date:'5-Apr-26', week:'Week 2',pace:'7:20',hr:126,dist:4.11, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
+  {date:'30-Mar-26',week:'Week 2',pace:'7:37',hr:134,dist:6.03, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'1-Apr-26', week:'Week 2',pace:'7:11',hr:131,dist:6.33, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'2-Apr-26', week:'Week 2',pace:'6:33',hr:146,dist:7.02, menu:'Morning Run',type:'Easy',notes:'Elevation: 106m',           double:false},
+  {date:'4-Apr-26', week:'Week 2',pace:'7:21',hr:145,dist:14.39,menu:'Long Run',   type:'Long',notes:'',                          double:false},
+  {date:'5-Apr-26', week:'Week 2',pace:'7:20',hr:126,dist:4.11, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
   // ── Week 3: 6–12 Apr ────────────────────────────────────────────────────
-  {date:'6-Apr-26', week:'Week 3',pace:'7:11',hr:133,dist:7.03, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'8-Apr-26', week:'Week 3',pace:'6:48',hr:135,dist:7.40, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'10-Apr-26',week:'Week 3',pace:'6:36',hr:136,dist:7.64, menu:'Morning Run',type:'Easy',notes:'Elevation: 83m',             double:false},
-  {date:'11-Apr-26',week:'Week 3',pace:'6:32',hr:136,dist:7.70, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'12-Apr-26',week:'Week 3',pace:'7:15',hr:141,dist:15.41,menu:'Long Run',   type:'Long',notes:'',                           double:false},
+  {date:'6-Apr-26', week:'Week 3',pace:'7:11',hr:133,dist:7.03, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'8-Apr-26', week:'Week 3',pace:'6:48',hr:135,dist:7.40, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'10-Apr-26',week:'Week 3',pace:'6:36',hr:136,dist:7.64, menu:'Morning Run',type:'Easy',notes:'Elevation: 83m',            double:false},
+  {date:'11-Apr-26',week:'Week 3',pace:'6:32',hr:136,dist:7.70, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'12-Apr-26',week:'Week 3',pace:'7:15',hr:141,dist:15.41,menu:'Long Run',   type:'Long',notes:'',                          double:false},
   // ── Week 4: 13–19 Apr ───────────────────────────────────────────────────
-  {date:'13-Apr-26',week:'Week 4',pace:'6:27',hr:136,dist:8.60, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'15-Apr-26',week:'Week 4',pace:'6:55',hr:137,dist:6.71, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'16-Apr-26',week:'Week 4',pace:'6:47',hr:146,dist:8.82, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'18-Apr-26',week:'Week 4',pace:'6:25',hr:136,dist:8.63, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'19-Apr-26',week:'Week 4',pace:'7:34',hr:141,dist:15.08,menu:'Long Run',   type:'Long',notes:'',                           double:false},
+  {date:'13-Apr-26',week:'Week 4',pace:'6:27',hr:136,dist:8.60, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'15-Apr-26',week:'Week 4',pace:'6:55',hr:137,dist:6.71, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'16-Apr-26',week:'Week 4',pace:'6:47',hr:146,dist:8.82, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'18-Apr-26',week:'Week 4',pace:'6:25',hr:136,dist:8.63, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'19-Apr-26',week:'Week 4',pace:'7:34',hr:141,dist:15.08,menu:'Long Run',   type:'Long',notes:'',                          double:false},
   // ── Week 5: 20–26 Apr ───────────────────────────────────────────────────
-  {date:'23-Apr-26',week:'Week 5',pace:'6:49',hr:144,dist:18.18,menu:'Double day', type:'Long',notes:'Elevation: 69m · double day', double:true},
-  {date:'24-Apr-26',week:'Week 5',pace:'6:27',hr:136,dist:9.34, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'25-Apr-26',week:'Week 5',pace:'6:27',hr:158,dist:15.04,menu:'Long Run',   type:'Long',notes:'',                           double:false},
-  {date:'26-Apr-26',week:'Week 5',pace:'6:30',hr:132,dist:9.26, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  // ── Week 6: 27 Apr–3 May ────────────────────────────────────────────────
-  {date:'27-Apr-26',week:'Week 6',pace:'6:16',hr:137,dist:8.03, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'29-Apr-26',week:'Week 6',pace:'6:24',hr:136,dist:7.07, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  {date:'30-Apr-26',week:'Week 6',pace:'6:33',hr:135,dist:6.16, menu:'Morning Run',type:'Easy',notes:'',                           double:false},
-  // ── Week 7: 4 May+ ──────────────────────────────────────────────────────
-  {date:'4-May-26', week:'Week 7',pace:'6:44',hr:124,dist:6.70, menu:'Evening Run', type:'Easy',notes:'',                           double:false},
+  {date:'23-Apr-26',week:'Week 5',pace:'6:49',hr:144,dist:18.18,menu:'Double day', type:'Long',notes:'Elevation: 69m · double day',double:true},
+  {date:'24-Apr-26',week:'Week 5',pace:'6:27',hr:136,dist:9.34, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'25-Apr-26',week:'Week 5',pace:'6:27',hr:158,dist:15.04,menu:'Long Run',   type:'Long',notes:'',                          double:false},
+  {date:'26-Apr-26',week:'Week 5',pace:'6:30',hr:132,dist:9.26, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  // ── Week 6: 27 Apr+ ─────────────────────────────────────────────────────
+  {date:'27-Apr-26',week:'Week 6',pace:'6:16',hr:137,dist:8.03, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'29-Apr-26',week:'Week 6',pace:'6:24',hr:136,dist:7.07, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'30-Apr-26',week:'Week 6',pace:'6:33',hr:135,dist:6.16, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  // ── Week 7: 4 May+ ──────────────────────────────────────────────────────────
+  {date:'4-May-26', week:'Week 7',pace:'6:44',hr:124,dist:6.70, menu:'Evening Run', type:'Easy',notes:'',                          double:false},
+  {date:'6-May-26', week:'Week 7',pace:'6:08',hr:136,dist:7.38, menu:'Morning Run', type:'Easy',notes:'',                          double:false},
 ];
 
-const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const paceToSec=p=>{const[m,s]=p.split(':').map(Number);return m*60+s;};
-const secToPace=s=>{const m=Math.floor(s/60);return m+':'+String(Math.round(s%60)).padStart(2,'0');};
-const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+// ── COROS snapshot · updated 8-May-26 ────────────────────────────────────────
+const RHR_EMBEDDED = [
+  {date:'2026-03-14',value:52},{date:'2026-03-15',value:52},{date:'2026-03-16',value:51},{date:'2026-03-17',value:51},
+  {date:'2026-03-18',value:49},{date:'2026-03-19',value:51},{date:'2026-03-20',value:50},{date:'2026-03-21',value:50},
+  {date:'2026-03-22',value:54},{date:'2026-03-23',value:52},{date:'2026-03-24',value:54},{date:'2026-03-25',value:53},
+  {date:'2026-03-26',value:55},{date:'2026-03-27',value:52},{date:'2026-03-28',value:53},{date:'2026-03-29',value:57},
+  {date:'2026-03-30',value:58},{date:'2026-03-31',value:56},{date:'2026-04-01',value:56},{date:'2026-04-02',value:56},
+  {date:'2026-04-03',value:54},{date:'2026-04-04',value:56},{date:'2026-04-05',value:54},{date:'2026-04-06',value:55},
+  {date:'2026-04-07',value:58},{date:'2026-04-08',value:57},{date:'2026-04-09',value:57},{date:'2026-04-10',value:55},
+  {date:'2026-04-11',value:57},{date:'2026-04-12',value:56},{date:'2026-04-13',value:55},{date:'2026-04-14',value:55},
+  {date:'2026-04-15',value:56},{date:'2026-04-16',value:57},{date:'2026-04-17',value:56},{date:'2026-04-18',value:57},
+  {date:'2026-04-19',value:53},{date:'2026-04-20',value:64},{date:'2026-04-21',value:53},{date:'2026-04-22',value:56},
+  {date:'2026-04-23',value:53},{date:'2026-04-24',value:54},{date:'2026-04-25',value:55},{date:'2026-04-26',value:53},
+  {date:'2026-04-27',value:56},{date:'2026-04-28',value:52},{date:'2026-04-29',value:51},{date:'2026-04-30',value:52},
+  {date:'2026-05-01',value:53},{date:'2026-05-02',value:52},{date:'2026-05-03',value:52},{date:'2026-05-04',value:56},
+  {date:'2026-05-05',value:53},{date:'2026-05-06',value:53},{date:'2026-05-07',value:52},{date:'2026-05-08',value:52},
+];
+const HRV_EMBEDDED = [
+  {date:'2026-03-14',value:60},{date:'2026-03-15',value:61},{date:'2026-03-16',value:66},{date:'2026-03-17',value:73},
+  {date:'2026-03-18',value:64},{date:'2026-03-19',value:72},{date:'2026-03-20',value:59},{date:'2026-03-21',value:60},
+  {date:'2026-03-22',value:56},{date:'2026-03-23',value:55},{date:'2026-03-24',value:64},{date:'2026-03-25',value:75},
+  {date:'2026-03-26',value:53},{date:'2026-03-27',value:64},{date:'2026-03-28',value:57},{date:'2026-03-29',value:44},
+  {date:'2026-03-30',value:44},{date:'2026-03-31',value:39},{date:'2026-04-01',value:43},{date:'2026-04-02',value:50},
+  {date:'2026-04-03',value:49},{date:'2026-04-04',value:54},{date:'2026-04-05',value:47},{date:'2026-04-06',value:58},
+  {date:'2026-04-07',value:48},{date:'2026-04-08',value:42},{date:'2026-04-09',value:41},{date:'2026-04-10',value:41},
+  {date:'2026-04-11',value:44},{date:'2026-04-12',value:45},{date:'2026-04-13',value:48},{date:'2026-04-14',value:47},
+  {date:'2026-04-15',value:53},{date:'2026-04-16',value:43},{date:'2026-04-17',value:45},{date:'2026-04-18',value:39},
+  {date:'2026-04-19',value:52},{date:'2026-04-20',value:33},{date:'2026-04-21',value:61},{date:'2026-04-22',value:54},
+  {date:'2026-04-23',value:48},{date:'2026-04-24',value:48},{date:'2026-04-25',value:40},{date:'2026-04-26',value:58},
+  {date:'2026-04-27',value:44},{date:'2026-04-28',value:58},{date:'2026-04-29',value:53},{date:'2026-04-30',value:67},
+  {date:'2026-05-01',value:53},{date:'2026-05-02',value:52},{date:'2026-05-03',value:48},{date:'2026-05-04',value:45},
+  {date:'2026-05-05',value:52},{date:'2026-05-06',value:50},{date:'2026-05-07',value:57},{date:'2026-05-08',value:50},
+];
+const HRV_META = {baseline:49,rangeMin:42,rangeMax:56};
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const paceToSec = p => { const [m,s]=p.split(':').map(Number); return m*60+s; };
+const secToPace = s => { const m=Math.floor(s/60); return m+':'+String(Math.round(s%60)).padStart(2,'0'); };
+const avg = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
 
 let RUNS=[],hrPaceChart=null,scatterChart=null,selectedIdx=null,filterZone=null;
 const LT_HR=173;
@@ -211,6 +267,7 @@ const ZONES=[
 ];
 
 function renderDashboard(){
+  document.getElementById('dashboard').style.display='';
   RUNS.forEach((r,i)=>{
     r.idx=i;
     r.paceSec=paceToSec(r.pace);
@@ -279,6 +336,8 @@ function renderDashboard(){
   });
   document.getElementById('clear-zone').onclick=()=>setZoneFilter(null);
   renderLog(bestEasyPace,bestEasyHR);
+  // Defer charts by two frames — browser must layout the newly-visible canvas
+  // before Chart.js can read its dimensions. Sync boot() skips this otherwise.
   renderCharts();
 }
 
@@ -326,10 +385,116 @@ function renderCharts(){
   scatterChart=new Chart(document.getElementById('scatter'),{type:'scatter',data:{datasets:[{label:'Sessions',data:RUNS.map((r,i)=>({x:r.paceSec,y:r.hr,idx:i})),backgroundColor:'rgba(216,103,78,0.85)',borderColor:'#0f1012',borderWidth:1.5,pointRadius:5,pointHoverRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,callbacks:{title:ctx=>{const r=RUNS[ctx[0].raw.idx];return r.date+' · '+r.week;},label:ctx=>{const r=RUNS[ctx.raw.idx];return[`Pace: ${r.pace}/km`,`HR: ${r.hr} bpm`,`${r.dist.toFixed(1)} km · ${r.type}`];}}}},scales:{x:{reverse:true,grid:{color:LINE},ticks:{color:FAINT,callback:v=>secToPace(Math.round(v))},title:{display:true,text:'Pace / km (← faster)',color:MUTED}},y:{grid:{color:LINE},ticks:{color:FAINT},title:{display:true,text:'HR (bpm)',color:MUTED}}},onClick:(e,elems)=>{if(elems.length)setSelected(elems[0].element.$context.raw.idx);}}});
 }
 
-window.addEventListener('load',()=>{
-  RUNS=RUNS_EMBEDDED;
+function loadCharts(){
+  if(typeof Chart!=='undefined'){
+    renderCharts();
+  } else {
+    // Chart.js didn't load from static tag — try dynamic injection
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js';
+    s.onload=()=>renderCharts();
+    s.onerror=()=>console.warn('Chart.js failed to load');
+    document.head.appendChild(s);
+  }
+}
+
+// ── COROS charts ─────────────────────────────────────────────────────────────
+
+function extractText(r){
+  if(typeof r==='string')return r;
+  if(Array.isArray(r))return r.map(c=>c.text||'').join('');
+  if(r&&r.text)return r.text;
+  return String(r);
+}
+function parseRHR(raw){
+  return extractText(raw).split('\n')
+    .filter(l=>/^\d{4}-\d{2}-\d{2}: \d+/.test(l.trim()))
+    .map(l=>{const[d,v]=l.trim().split(': ');return{date:d,value:parseInt(v)};})
+    .reverse();
+}
+function parseHRV(raw){
+  const text=extractText(raw);
+  const rm=text.match(/Normal Range: (\d+) - (\d+)/);
+  const bm=text.match(/Baseline: (\d+)/);
+  const rangeMin=rm?+rm[1]:42,rangeMax=rm?+rm[2]:56,baseline=bm?+bm[1]:49;
+  const lines=text.split('\n');const points=[];let cur=null;
+  lines.forEach(l=>{
+    const dm=l.match(/^(\d{4}-\d{2}-\d{2}):$/);const vm=l.match(/HRV Avg: (\d+)/);
+    if(dm)cur=dm[1];if(vm&&cur){points.push({date:cur,value:+vm[1]});cur=null;}
+  });
+  return{points:points.reverse(),baseline,rangeMin,rangeMax};
+}
+
+let rhrChart=null,hrvChart=null;
+
+function renderCorosCharts(rhrData,hrvData,meta){
+  const INK='#f2efe8',MUTED='#a6a49c',FAINT='#6b6962',LINE='#2a2b2e',GOOD='#8bb28a',AMBER='#e8c25e',CORAL='#d8674e';
+  const{baseline,rangeMin,rangeMax}=meta;
+
+  // Resting HR panel
+  if(rhrData&&rhrData.length){
+    document.getElementById('rhr-panel').style.display='';
+    const today=rhrData[rhrData.length-1],prev=rhrData[rhrData.length-2];
+    const delta=prev?today.value-prev.value:0;
+    document.getElementById('rhr-today').textContent=today.value;
+    const tEl=document.getElementById('rhr-trend');
+    tEl.textContent=delta===0?'same as yesterday':delta>0?`▲${delta} vs yesterday`:`▼${Math.abs(delta)} vs yesterday`;
+    tEl.style.color=delta<0?GOOD:delta>0?CORAL:MUTED;
+    const labels=rhrData.map(d=>d.date.slice(5)),values=rhrData.map(d=>d.value);
+    if(rhrChart)rhrChart.destroy();
+    rhrChart=new Chart(document.getElementById('rhrChart'),{type:'line',data:{labels,datasets:[{
+      label:'Resting HR',data:values,borderColor:GOOD,backgroundColor:'rgba(139,178,138,0.07)',
+      fill:true,tension:0.35,pointRadius:2.5,pointHoverRadius:5,borderWidth:2
+    }]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,callbacks:{label:ctx=>`${ctx.parsed.y} bpm`}}},
+      scales:{x:{grid:{color:LINE},ticks:{color:FAINT,maxTicksLimit:8,maxRotation:0}},
+        y:{grid:{color:LINE},ticks:{color:GOOD,callback:v=>v+' bpm'},suggestedMin:Math.min(...values)-4,suggestedMax:Math.max(...values)+4}}
+    }});
+  }
+
+  // HRV panel
+  if(hrvData&&hrvData.length){
+    document.getElementById('hrv-panel').style.display='';
+    const today=hrvData[hrvData.length-1];
+    const status=today.value>rangeMax?'Above normal — well recovered':today.value<rangeMin?'Below normal — more rest':'Normal';
+    const statusColor=today.value>rangeMax?GOOD:today.value<rangeMin?CORAL:MUTED;
+    document.getElementById('hrv-today').textContent=today.value;
+    const sEl=document.getElementById('hrv-status');sEl.textContent=status;sEl.style.color=statusColor;
+    const labels=hrvData.map(d=>d.date.slice(5)),values=hrvData.map(d=>d.value);
+    if(hrvChart)hrvChart.destroy();
+    hrvChart=new Chart(document.getElementById('hrvChart'),{type:'line',data:{labels,datasets:[
+      {label:'HRV',data:values,borderColor:AMBER,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2.5,pointHoverRadius:5,borderWidth:2,order:0},
+      {label:'Upper',data:labels.map(()=>rangeMax),borderColor:'rgba(162,160,156,0.18)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:'+1',backgroundColor:'rgba(162,160,156,0.06)',order:2},
+      {label:'Lower',data:labels.map(()=>rangeMin),borderColor:'rgba(162,160,156,0.18)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false,order:3},
+      {label:'Baseline',data:labels.map(()=>baseline),borderColor:'rgba(162,160,156,0.32)',borderWidth:1,pointRadius:0,fill:false,order:4}
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,
+        filter:item=>item.datasetIndex===0,
+        callbacks:{label:ctx=>{const v=ctx.parsed.y;return`HRV: ${v} ms${v>rangeMax?' ↑ above normal':v<rangeMin?' ↓ below normal':' normal'}`;},
+          afterLabel:()=>`Range: ${rangeMin}–${rangeMax} ms · Baseline: ${baseline} ms`}
+      }},
+      scales:{x:{grid:{color:LINE},ticks:{color:FAINT,maxTicksLimit:8,maxRotation:0}},
+        y:{grid:{color:LINE},ticks:{color:AMBER,callback:v=>v+' ms'},suggestedMin:Math.min(...values,rangeMin)-6,suggestedMax:Math.max(...values,rangeMax)+6}}
+    }});
+  }
+}
+
+async function initCoros(){
+  let rhrData=RHR_EMBEDDED,hrvData=HRV_EMBEDDED,meta=HRV_META;
+  if(window.cowork){
+    try{const raw=await window.cowork.callMcpTool('mcp__0dd10bbf-4a70-4038-8185-6894abca63f0__queryRestingHeartRate',{days:56,timezone:'Asia/Kuala_Lumpur'});rhrData=parseRHR(raw);}catch(e){console.warn('RHR live failed, using snapshot',e);}
+    try{const raw=await window.cowork.callMcpTool('mcp__0dd10bbf-4a70-4038-8185-6894abca63f0__queryHrvAssessment',{days:56,timezone:'Asia/Kuala_Lumpur'});const p=parseHRV(raw);hrvData=p.points;meta={baseline:p.baseline,rangeMin:p.rangeMin,rangeMax:p.rangeMax};}catch(e){console.warn('HRV live failed, using snapshot',e);}
+  }
+  renderCorosCharts(rhrData,hrvData,meta);
+}
+
+function boot(){
+  RUNS = RUNS_EMBEDDED;
   renderDashboard();
-});
+  initCoros();
+}
+
+window.addEventListener('load', boot);
 </script>
 </body>
 </html>
