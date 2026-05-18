@@ -67,7 +67,7 @@ html, body { margin:0; padding:0; background:#fafaf7; }
 .clear-btn{background:none;border:1px solid var(--line);color:var(--ink-muted);padding:3px 8px;border-radius:3px;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:0.1em;}
 .clear-btn:hover{border-color:var(--coral);color:var(--coral);}
 .log{display:flex;flex-direction:column;gap:1px;}
-.log-row{display:grid;grid-template-columns:72px 64px 1fr 60px 44px 44px;gap:10px;align-items:center;padding:9px 12px;border-radius:4px;background:none;border:none;text-align:left;font-family:inherit;color:inherit;cursor:pointer;}
+.log-row{display:grid;grid-template-columns:72px 64px 1fr 60px 44px 44px 44px;gap:10px;align-items:center;padding:9px 12px;border-radius:4px;background:none;border:none;text-align:left;font-family:inherit;color:inherit;cursor:pointer;}
 .log-row.body:hover{background:var(--bg-3);} .log-row.body.sel{background:oklch(0.55 0.18 30 / 0.12);}
 .log-row.head{padding-top:4px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:4px;cursor:default;}
 .log-date{font-size:11px;font-weight:500;} .log-week{font-size:10px;color:var(--ink-muted);}
@@ -91,7 +91,7 @@ html, body { margin:0; padding:0; background:#fafaf7; }
   .ring{width:64px;height:64px;} .ring svg{width:64px;height:64px;}
   .coach{padding:14px 16px;gap:10px;align-items:flex-start;flex-wrap:wrap;} .coach-msg{font-size:15px;}
   .coach-tags{margin-left:0;flex-basis:100%;gap:12px;}
-  .log-row{grid-template-columns:60px 1fr 50px 36px 36px;gap:8px;padding:9px 8px;}
+  .log-row{grid-template-columns:60px 1fr 50px 36px 36px 36px;gap:8px;padding:9px 8px;}
   .log-row > :nth-child(2){display:none;} .log-menu{font-size:12px;} .log-val{font-size:11px;}
 }
 </style>
@@ -99,7 +99,7 @@ html, body { margin:0; padding:0; background:#fafaf7; }
 <body>
 <div class="page"><div class="theme-dark">
 <section class="mast"><div>
-  <div class="overline mast-kicker">Aerobic block · Mar–Apr 2026 · Strava</div>
+  <div class="overline mast-kicker" id="mast-kicker">Aerobic block · Mar–May 2026 · Strava</div>
   <h1>The quiet math of aerobic patience.</h1>
   <p class="mast-dek"><span id="mast-count">—</span> sessions, <span id="mast-km">—</span> kilometres, one slow-turning question — is the heart doing less work for the same pace?</p>
   <div class="mast-meta">
@@ -167,7 +167,7 @@ html, body { margin:0; padding:0; background:#fafaf7; }
   </div>
 </div>
 <footer class="site-foot">
-  <span>Aerobic block · Mar–Apr 2026</span>
+  <span id="footer-range">Aerobic block · Mar–May 2026</span>
   <a href="https://docs.google.com/spreadsheets/d/1vLDC-slyVKB6uDWwIMkCFq9uxu6PN4-A/edit?gid=352326790#gid=352326790" target="_blank" rel="noopener">Training Log →</a>
   <a href="https://arifrashih.github.io/helloyou/" target="_blank" rel="noopener">arifrashih.github.io/helloyou →</a>
 </footer>
@@ -207,21 +207,24 @@ const RUNS_EMBEDDED = [
   {date:'26-Apr-26',week:'Week 5',pace:'6:30',hr:132,dist:9.26, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
   // ── Week 6: 27 Apr+ ─────────────────────────────────────────────────────
   {date:'27-Apr-26',week:'Week 6',pace:'6:16',hr:137,dist:8.03, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
-  {date:'29-Apr-26',week:'Week 6',pace:'6:24',hr:136,dist:7.07, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
-  {date:'30-Apr-26',week:'Week 6',pace:'6:33',hr:135,dist:6.16, menu:'Morning Run',type:'Easy',notes:'',                          double:false},
+  {date:'29-Apr-26',week:'Week 6',pace:'6:24',hr:136,dist:7.07, menu:'Morning Run',type:'Easy',notes:'',              temp:25,    double:false},
+  {date:'30-Apr-26',week:'Week 6',pace:'6:33',hr:135,dist:6.16, menu:'Morning Run',type:'Easy',notes:'',              temp:26,    double:false},
   // ── Week 7: 4 May+ ──────────────────────────────────────────────────────────
-  {date:'4-May-26', week:'Week 7',pace:'6:44',hr:124,dist:6.70, menu:'Evening Run', type:'Easy',notes:'',                          double:false},
-  {date:'6-May-26', week:'Week 7',pace:'6:08',hr:136,dist:7.38, menu:'Morning Run', type:'Easy',notes:'',                          double:false},
-  {date:'7-May-26', week:'Week 7',pace:'6:33',hr:133,dist:6.08, menu:'Morning Run', type:'Easy',notes:'',                          double:false},
-  {date:'10-May-26',week:'Week 7',pace:'6:44',hr:131,dist:13.38,menu:'Morning Run', type:'Easy',notes:'Elevation: 50m',            double:false},
+  {date:'4-May-26', week:'Week 7',pace:'6:44',hr:124,dist:6.70, menu:'Evening Run', type:'Easy',notes:'',              temp:28,    double:false},
+  {date:'6-May-26', week:'Week 7',pace:'6:08',hr:136,dist:7.38, menu:'Morning Run', type:'Easy',notes:'',              temp:26,    double:false},
+  {date:'7-May-26', week:'Week 7',pace:'6:33',hr:133,dist:6.08, menu:'Morning Run', type:'Easy',notes:'',              temp:27,    double:false},
+  {date:'10-May-26',week:'Week 7',pace:'6:44',hr:131,dist:13.38,menu:'Morning Run', type:'Easy',notes:'Elevation: 50m',temp:28,    double:false},
   // ── Week 8: 11 May+ ─────────────────────────────────────────────────────────
-  {date:'11-May-26',week:'Week 8',pace:'6:17',hr:131,dist:8.01, menu:'Morning Run', type:'Easy',notes:'',                          double:false},
-  {date:'12-May-26',week:'Week 8',pace:'5:23',hr:164,dist:6.32, menu:'Morning Run', type:'Easy',notes:'',                          double:false},
-  {date:'13-May-26',week:'Week 8',pace:'6:34',hr:135,dist:7.64, menu:'Morning Run', type:'Easy',notes:'',                          double:false},
-  {date:'14-May-26',week:'Week 8',pace:'8:27',hr:138,dist:5.82, menu:'Morning Run', type:'Easy',notes:'',                          double:false},
+  {date:'11-May-26',week:'Week 8',pace:'6:17',hr:131,dist:8.01, menu:'Morning Run', type:'Easy',notes:'',              temp:25,    double:false},
+  {date:'12-May-26',week:'Week 8',pace:'5:23',hr:164,dist:6.32, menu:'Morning Run', type:'Easy',notes:'',              temp:28,    double:false},
+  {date:'13-May-26',week:'Week 8',pace:'6:34',hr:135,dist:7.64, menu:'Morning Run', type:'Easy',notes:'',              temp:28,    double:false},
+  {date:'14-May-26',week:'Week 8',pace:'8:27',hr:138,dist:5.82, menu:'Morning Run', type:'Easy',notes:'',              temp:29,    double:false},
+  {date:'16-May-26',week:'Week 8',pace:'6:15',hr:142,dist:16.05,menu:'Morning Run', type:'Long', notes:'Elevation: 252m',          temp:27,double:false},
+  {date:'17-May-26',week:'Week 8',pace:'5:41',hr:153,dist:12.26,menu:'Morning Run', type:'Easy',notes:'Elevation: 92m',            temp:29,double:false},
+  {date:'18-May-26',week:'Week 8',pace:'6:16',hr:127,dist:8.73, menu:'Morning Run', type:'Easy',notes:'',              temp:23,    double:false},
 ];
 
-// ── COROS snapshot · updated 14-May-26 ───────────────────────────────────────
+// ── COROS snapshot · updated 18-May-26 ───────────────────────────────────────
 const RHR_EMBEDDED = [
   {date:'2026-03-20',value:50},{date:'2026-03-21',value:50},{date:'2026-03-22',value:54},{date:'2026-03-23',value:52},
   {date:'2026-03-24',value:54},{date:'2026-03-25',value:53},{date:'2026-03-26',value:55},{date:'2026-03-27',value:52},
@@ -326,6 +329,14 @@ function renderDashboard(){
   const coachMsg=hrTrend<-4?`Fitness building. HR down ${Math.abs(hrTrend)} bpm across the block. Stay patient — 60 min easy, keep HR in Z1–Z2 (sub-156).`:hrTrend>4?`HR creeping up ${hrTrend} bpm. Recovery day — 40 min pure Z1, hard cap at 138.`:`Base holding. Keep the cadence: 55 min easy, stay below ${LT_HR-17} (top of Z2), cadence ~180.`;
   document.getElementById('coach-msg').textContent=coachMsg;
 
+  // Dynamic date range — auto-updates when runs are added
+  const _mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const _first=RUNS[0].dateObj,_last=lastRun.dateObj;
+  const _startMon=_mons[_first.getMonth()],_endMon=_mons[_last.getMonth()],_yr=_last.getFullYear();
+  const _rangeStr=_startMon===_endMon?`${_startMon} ${_yr}`:`${_startMon}–${_endMon} ${_yr}`;
+  const _kicker=document.getElementById('mast-kicker');if(_kicker)_kicker.textContent=`Aerobic block · ${_rangeStr} · Strava`;
+  const _footer=document.getElementById('footer-range');if(_footer)_footer.textContent=`Aerobic block · ${_rangeStr}`;
+
   const tickerBar=document.getElementById('ticker-bar');tickerBar.innerHTML='';
   RUNS.forEach(r=>{
     const chip=document.createElement('div');chip.className='chip';chip.dataset.idx=r.idx;
@@ -353,13 +364,13 @@ function renderLog(bestEasyPace,bestEasyHR){
   const rows=(filterZone?RUNS.filter(r=>r.hr>=filterZone.min&&r.hr<=filterZone.max):RUNS.slice()).sort((a,b)=>b.dateObj-a.dateObj);
   logEl.innerHTML='';
   const head=document.createElement('div');head.className='log-row head';
-  head.innerHTML=`<span class="overline">Date</span><span class="overline">Week</span><span class="overline">Menu</span><span class="overline" style="text-align:right;">Pace</span><span class="overline" style="text-align:right;">HR</span><span class="overline" style="text-align:right;">Km</span>`;
+  head.innerHTML=`<span class="overline">Date</span><span class="overline">Week</span><span class="overline">Menu</span><span class="overline" style="text-align:right;">Pace</span><span class="overline" style="text-align:right;">HR</span><span class="overline" style="text-align:right;">Km</span><span class="overline" style="text-align:right;">°C</span>`;
   logEl.appendChild(head);
   if(!rows.length){const e=document.createElement('div');e.className='log-empty';e.textContent='No runs fall into this zone.';logEl.appendChild(e);return;}
   rows.forEach(r=>{
     const isSel=selectedIdx===r.idx,isPBPace=bestEasyPace&&bestEasyPace.idx===r.idx,isPBHR=bestEasyHR&&bestEasyHR.idx===r.idx;
     const btn=document.createElement('button');btn.className='log-row body'+(isSel?' sel':'');btn.dataset.idx=r.idx;if(r.notes)btn.title=r.notes;
-    btn.innerHTML=`<span class="mono log-date">${r.date.replace(/-\d{2}$/,'')}${r.double?'<em class="log-double">2×</em>':''}</span><span class="mono log-week">${r.week}</span><span class="log-menu"><span class="log-type type-${r.type.toLowerCase()}">${r.type}</span>${r.menu}</span><span class="mono log-val${isPBPace?' pb':''}">${r.pace}${isPBPace?'<em>★</em>':''}</span><span class="mono log-val${isPBHR?' pb':''}">${r.hr}${isPBHR?'<em>★</em>':''}</span><span class="mono log-val">${r.dist.toFixed(1)}</span>`;
+    btn.innerHTML=`<span class="mono log-date">${r.date.replace(/-\d{2}$/,'')}${r.double?'<em class="log-double">2×</em>':''}</span><span class="mono log-week">${r.week}</span><span class="log-menu"><span class="log-type type-${r.type.toLowerCase()}">${r.type}</span>${r.menu}</span><span class="mono log-val${isPBPace?' pb':''}">${r.pace}${isPBPace?'<em>★</em>':''}</span><span class="mono log-val${isPBHR?' pb':''}">${r.hr}${isPBHR?'<em>★</em>':''}</span><span class="mono log-val">${r.dist.toFixed(1)}</span><span class="mono log-val" style="color:${r.temp!=null?(r.temp>=30?'var(--coral)':r.temp>=27?'var(--amber)':'var(--ink-muted)'):'var(--ink-faint)'}">${r.temp!=null?r.temp+'°':'—'}</span>`;
     btn.addEventListener('click',()=>setSelected(r.idx===selectedIdx?null:r.idx));logEl.appendChild(btn);
   });
 }
@@ -383,13 +394,20 @@ function setSelected(idx){
   if(scatterChart){scatterChart.data.datasets[0].backgroundColor=RUNS.map((_,i)=>i===idx?'#fff':'rgba(216,103,78,0.92)');scatterChart.data.datasets[0].pointRadius=RUNS.map((_,i)=>i===idx?8:5);scatterChart.update();}
 }
 
+function linReg(xs,ys){const n=xs.length,sx=xs.reduce((a,x)=>a+x,0),sy=ys.reduce((a,y)=>a+y,0),sxy=xs.reduce((a,x,i)=>a+x*ys[i],0),sxx=xs.reduce((a,x)=>a+x*x,0);const sl=(n*sxy-sx*sy)/(n*sxx-sx*sx||1);return{slope:sl,intercept:(sy-sl*sx)/n};}
+
 function renderCharts(){
   const INK='#f2efe8',MUTED='#a6a49c',FAINT='#6b6962',LINE='#2a2b2e',CORAL='#d8674e',AMBER='#e8c25e';
   Chart.defaults.color=MUTED;Chart.defaults.font.family="'JetBrains Mono',ui-monospace,monospace";Chart.defaults.font.size=10;
   if(hrPaceChart)hrPaceChart.destroy();if(scatterChart)scatterChart.destroy();
   const labels=RUNS.map(r=>r.date.replace(/-\d{2}$/,''));
-  hrPaceChart=new Chart(document.getElementById('hrPaceChart'),{type:'line',data:{labels,datasets:[{label:'HR (bpm)',data:RUNS.map(r=>r.hr),borderColor:CORAL,backgroundColor:CORAL,yAxisID:'hr',tension:0.3,pointRadius:3,pointHoverRadius:6,borderWidth:2},{label:'Pace (sec/km)',data:RUNS.map(r=>r.paceSec),borderColor:AMBER,backgroundColor:AMBER,yAxisID:'pace',tension:0.3,pointRadius:3,pointHoverRadius:6,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:MUTED,boxHeight:4,font:{size:11}}},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,callbacks:{afterTitle:ctx=>RUNS[ctx[0].dataIndex].menu,label:ctx=>ctx.datasetIndex===0?`HR: ${ctx.parsed.y} bpm`:`Pace: ${secToPace(ctx.parsed.y)}/km`}}},scales:{x:{grid:{color:LINE,drawBorder:false},ticks:{color:FAINT,maxRotation:0,autoSkip:true,maxTicksLimit:8}},hr:{type:'linear',position:'right',grid:{drawOnChartArea:false},ticks:{color:CORAL,callback:v=>v+' bpm'},title:{display:true,text:'HR (bpm)',color:CORAL}},pace:{type:'linear',position:'left',reverse:true,grid:{color:LINE,drawBorder:false},ticks:{color:AMBER,callback:v=>secToPace(v)},title:{display:true,text:'Pace / km',color:AMBER}}},onClick:(e,elems)=>{if(elems.length)setSelected(elems[0].index);}}});
-  scatterChart=new Chart(document.getElementById('scatter'),{type:'scatter',data:{datasets:[{label:'Sessions',data:RUNS.map((r,i)=>({x:r.paceSec,y:r.hr,idx:i})),backgroundColor:'rgba(216,103,78,0.85)',borderColor:'#0f1012',borderWidth:1.5,pointRadius:5,pointHoverRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,callbacks:{title:ctx=>{const r=RUNS[ctx[0].raw.idx];return r.date+' · '+r.week;},label:ctx=>{const r=RUNS[ctx.raw.idx];return[`Pace: ${r.pace}/km`,`HR: ${r.hr} bpm`,`${r.dist.toFixed(1)} km · ${r.type}`];}}}},scales:{x:{reverse:true,grid:{color:LINE},ticks:{color:FAINT,callback:v=>secToPace(Math.round(v))},title:{display:true,text:'Pace / km (← faster)',color:MUTED}},y:{grid:{color:LINE},ticks:{color:FAINT},title:{display:true,text:'HR (bpm)',color:MUTED}}},onClick:(e,elems)=>{if(elems.length)setSelected(elems[0].element.$context.raw.idx);}}});
+  const _idxs=RUNS.map((_,i)=>i),_hrs=RUNS.map(r=>r.hr),_paces=RUNS.map(r=>r.paceSec);
+  const _lrHR=linReg(_idxs,_hrs),_lrPace=linReg(_idxs,_paces);
+  const _lrScat=linReg(_paces,_hrs),_minP=Math.min(..._paces),_maxP=Math.max(..._paces);
+  const _tHR=RUNS.map((_,i)=>+(_lrHR.slope*i+_lrHR.intercept).toFixed(1));
+  const _tPace=RUNS.map((_,i)=>+(_lrPace.slope*i+_lrPace.intercept).toFixed(1));
+  hrPaceChart=new Chart(document.getElementById('hrPaceChart'),{type:'line',data:{labels,datasets:[{label:'HR (bpm)',data:RUNS.map(r=>r.hr),borderColor:CORAL,backgroundColor:CORAL,yAxisID:'hr',tension:0.3,pointRadius:3,pointHoverRadius:6,borderWidth:2},{label:'Pace (sec/km)',data:RUNS.map(r=>r.paceSec),borderColor:AMBER,backgroundColor:AMBER,yAxisID:'pace',tension:0.3,pointRadius:3,pointHoverRadius:6,borderWidth:2},{label:'HR trend',data:_tHR,borderColor:'rgba(216,103,78,0.32)',borderDash:[7,4],pointRadius:0,borderWidth:1.5,tension:0,yAxisID:'hr',order:10},{label:'Pace trend',data:_tPace,borderColor:'rgba(232,194,94,0.32)',borderDash:[7,4],pointRadius:0,borderWidth:1.5,tension:0,yAxisID:'pace',order:10}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:MUTED,boxHeight:4,font:{size:11}}},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,callbacks:{afterTitle:ctx=>RUNS[ctx[0].dataIndex].menu,label:ctx=>ctx.datasetIndex===0?`HR: ${ctx.parsed.y} bpm`:`Pace: ${secToPace(ctx.parsed.y)}/km`}}},scales:{x:{grid:{color:LINE,drawBorder:false},ticks:{color:FAINT,maxRotation:0,autoSkip:true,maxTicksLimit:8}},hr:{type:'linear',position:'right',grid:{drawOnChartArea:false},ticks:{color:CORAL,callback:v=>v+' bpm'},title:{display:true,text:'HR (bpm)',color:CORAL}},pace:{type:'linear',position:'left',reverse:true,grid:{color:LINE,drawBorder:false},ticks:{color:AMBER,callback:v=>secToPace(v)},title:{display:true,text:'Pace / km',color:AMBER}}},onClick:(e,elems)=>{if(elems.length)setSelected(elems[0].index);}}});
+  scatterChart=new Chart(document.getElementById('scatter'),{type:'scatter',data:{datasets:[{label:'Sessions',data:RUNS.map((r,i)=>({x:r.paceSec,y:r.hr,idx:i})),backgroundColor:'rgba(216,103,78,0.85)',borderColor:'#0f1012',borderWidth:1.5,pointRadius:5,pointHoverRadius:8},{type:'line',label:'Trend',data:[{x:_minP,y:+(_lrScat.slope*_minP+_lrScat.intercept).toFixed(1)},{x:_maxP,y:+(_lrScat.slope*_maxP+_lrScat.intercept).toFixed(1)}],borderColor:'rgba(242,239,232,0.22)',borderDash:[7,4],pointRadius:0,borderWidth:1.5,tension:0,order:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,callbacks:{title:ctx=>{const r=RUNS[ctx[0].raw.idx];return r.date+' · '+r.week;},label:ctx=>{const r=RUNS[ctx.raw.idx];return[`Pace: ${r.pace}/km`,`HR: ${r.hr} bpm`,`${r.dist.toFixed(1)} km · ${r.type}`];}}}},scales:{x:{reverse:true,grid:{color:LINE},ticks:{color:FAINT,callback:v=>secToPace(Math.round(v))},title:{display:true,text:'Pace / km (← faster)',color:MUTED}},y:{grid:{color:LINE},ticks:{color:FAINT},title:{display:true,text:'HR (bpm)',color:MUTED}}},onClick:(e,elems)=>{if(elems.length)setSelected(elems[0].element.$context.raw.idx);}}});
 }
 
 function loadCharts(){
@@ -451,7 +469,10 @@ function renderCorosCharts(rhrData,hrvData,meta){
     if(rhrChart)rhrChart.destroy();
     rhrChart=new Chart(document.getElementById('rhrChart'),{type:'line',data:{labels,datasets:[{
       label:'Resting HR',data:values,borderColor:GOOD,backgroundColor:'rgba(139,178,138,0.07)',
-      fill:true,tension:0.35,pointRadius:2.5,pointHoverRadius:5,borderWidth:2
+      fill:true,tension:0.35,pointRadius:2.5,pointHoverRadius:5,borderWidth:2,order:0
+    },{
+      label:'Trend',data:(()=>{const lr=linReg(values.map((_,i)=>i),values);return values.map((_,i)=>+(lr.slope*i+lr.intercept).toFixed(1));})(),
+      borderColor:'rgba(139,178,138,0.38)',borderDash:[7,4],pointRadius:0,borderWidth:1.5,tension:0,fill:false,order:1
     }]},options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,callbacks:{label:ctx=>`${ctx.parsed.y} bpm`}}},
       scales:{x:{grid:{color:LINE},ticks:{color:FAINT,maxTicksLimit:8,maxRotation:0}},
@@ -471,6 +492,7 @@ function renderCorosCharts(rhrData,hrvData,meta){
     if(hrvChart)hrvChart.destroy();
     hrvChart=new Chart(document.getElementById('hrvChart'),{type:'line',data:{labels,datasets:[
       {label:'HRV',data:values,borderColor:AMBER,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2.5,pointHoverRadius:5,borderWidth:2,order:0},
+      {label:'Trend',data:(()=>{const lr=linReg(values.map((_,i)=>i),values);return values.map((_,i)=>+(lr.slope*i+lr.intercept).toFixed(1));})(),borderColor:'rgba(232,194,94,0.32)',borderDash:[7,4],pointRadius:0,borderWidth:1.5,tension:0,fill:false,order:1},
       {label:'Upper',data:labels.map(()=>rangeMax),borderColor:'rgba(162,160,156,0.18)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:'+1',backgroundColor:'rgba(162,160,156,0.06)',order:2},
       {label:'Lower',data:labels.map(()=>rangeMin),borderColor:'rgba(162,160,156,0.18)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false,order:3},
       {label:'Baseline',data:labels.map(()=>baseline),borderColor:'rgba(162,160,156,0.32)',borderWidth:1,pointRadius:0,fill:false,order:4}
