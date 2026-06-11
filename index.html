@@ -43,6 +43,14 @@ html, body { margin:0; padding:0; background:#fafaf7; }
 .ring{width:84px;height:84px;position:relative;flex-shrink:0;}
 .ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:500;}
 .footnote{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-top:14px;letter-spacing:0.02em;}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+@media(max-width:900px){.board{grid-template-columns:repeat(2,1fr);}}
+.vcard{position:relative;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:16px 18px 18px;overflow:hidden;}
+.vcard::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,var(--line));}
+.vcard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.pill{font-family:var(--mono);font-size:8px;font-weight:600;letter-spacing:0.12em;padding:2px 7px;border-radius:999px;border:1px solid currentColor;white-space:nowrap;flex-shrink:0;}
+.vcard .num{font-size:28px;}
+@media(max-width:720px){.board{gap:10px;margin-bottom:14px;}.vcard{padding:13px 14px 14px;}.vcard .num{font-size:22px;}}
 .chart-card{padding:20px 22px;margin-bottom:18px;}
 .chart-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
 .chart-sub{font-size:12px;color:var(--ink-muted);margin-top:4px;}
@@ -114,6 +122,38 @@ html, body { margin:0; padding:0; background:#fafaf7; }
     <div class="ticker-head"><span class="overline">KILOMETER TICKER</span><span class="mono" style="color:var(--coral);font-size:11px;"><span id="ticker-km">—</span> KM TOTAL</span></div>
     <div class="ticker-bar" id="ticker-bar"></div>
   </div>
+  <div class="board">
+    <div class="vcard" id="v-base">
+      <div class="vcard-head"><span class="overline">Aerobic gain · HR 128–140</span><span class="pill" id="v-base-pill">—</span></div>
+      <div class="eff-row">
+        <div class="eff-text"><div class="eff-score" id="eff-score">—</div><div class="eff-sub" id="eff-sub">—</div></div>
+        <div class="ring"><svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="38" stroke="var(--bg-3)" stroke-width="7" fill="none"/><circle id="eff-ring" cx="42" cy="42" r="38" stroke="var(--good)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="238.76" transform="rotate(-90 42 42)"/></svg><div class="ring-label" id="eff-ring-label">—</div></div>
+      </div>
+      <div class="footnote" id="eff-foot">—</div>
+    </div>
+    <div class="vcard" id="v-disc">
+      <div class="vcard-head"><span class="overline">Easy-day discipline</span><span class="pill" id="v-disc-pill">—</span></div>
+      <div class="num" id="v-disc-num">—</div>
+      <div class="num-sub" id="v-disc-sub">—</div>
+      <div class="footnote">Easy runs that stayed ≤140 bpm · last 3 weeks</div>
+    </div>
+    <div class="vcard" id="v-ramp">
+      <div class="vcard-head"><span class="overline">Volume ramp</span><span class="pill" id="v-ramp-pill">—</span></div>
+      <div class="num" id="v-ramp-num">—</div>
+      <div class="num-sub" id="v-ramp-sub">—</div>
+      <div class="footnote">Last full week vs trailing 4-week average</div>
+    </div>
+    <div class="vcard" id="v-long">
+      <div class="vcard-head"><span class="overline">Long run recency</span><span class="pill" id="v-long-pill">—</span></div>
+      <div class="num" id="v-long-num">—</div>
+      <div class="num-sub" id="v-long-sub">—</div>
+      <div class="footnote">Days since a run ≥13 km · aim ≤7</div>
+    </div>
+  </div>
+  <div class="card chart-card">
+    <div class="chart-head"><div><div class="overline">Weekly volume · ramp guard</div><div class="chart-sub">Green = steady · amber = swing · coral = collapse · grey = in progress · dashed = 4-wk avg</div></div></div>
+    <div class="chart-wrap"><canvas id="volChart"></canvas></div>
+  </div>
   <div class="card chart-card">
     <div class="chart-head"><div><div class="overline">Pace &amp; heart, side by side</div><div class="chart-sub">Coral = HR (right axis) · amber = pace (left, lower is faster)</div></div></div>
     <div class="chart-wrap"><canvas id="hrPaceChart"></canvas></div>
@@ -121,11 +161,10 @@ html, body { margin:0; padding:0; background:#fafaf7; }
   <div class="grid">
     <div class="card hero"><div class="overline">Avg pace · easy</div><div class="hero-num" id="avg-pace">—</div><div class="num-sub" id="pace-delta">—</div></div>
     <div class="card eff">
-      <div class="eff-row">
-        <div class="eff-text"><div class="overline">Aerobic efficiency</div><div class="eff-score" id="eff-score">—</div><div class="eff-sub" id="eff-sub">—</div></div>
-        <div class="ring"><svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="38" stroke="var(--bg-3)" stroke-width="7" fill="none"/><circle id="eff-ring" cx="42" cy="42" r="38" stroke="var(--good)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="238.76" transform="rotate(-90 42 42)"/></svg><div class="ring-label" id="eff-ring-label">—</div></div>
-      </div>
-      <div class="footnote" id="eff-foot">—</div>
+      <div class="overline">Heat cost · easy runs</div>
+      <div class="num" id="heat-cost">—</div>
+      <div class="num-sub" id="heat-sub">—</div>
+      <div class="footnote" id="heat-foot">Forgive hot-day paces before judging a run.</div>
     </div>
     <div class="card stat"><div class="overline">Avg HR</div><div class="num"><span id="avg-hr">—</span><span class="unit">bpm</span></div><div class="num-sub" id="hr-sub">—</div></div>
     <div class="card stat"><div class="overline">Volume</div><div class="num"><span id="total-km">—</span><span class="unit">km</span></div><div class="num-sub" id="vol-sub">—</div></div>
@@ -276,10 +315,10 @@ const HRV_META = {baseline:51,rangeMin:44,rangeMax:58};
 // ── Constants ────────────────────────────────────────────────────────────────
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const paceToSec = p => { const [m,s]=p.split(':').map(Number); return m*60+s; };
-const secToPace = s => { const m=Math.floor(s/60); return m+':'+String(Math.round(s%60)).padStart(2,'0'); };
+const secToPace = s => { s=Math.round(s); const m=Math.floor(s/60); return m+':'+String(s%60).padStart(2,'0'); };
 const avg = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
 
-let RUNS=[],hrPaceChart=null,scatterChart=null,selectedIdx=null,filterZone=null;
+let RUNS=[],WEEKSTATS=[],hrPaceChart=null,scatterChart=null,volChart=null,selectedIdx=null,filterZone=null;
 const LT_HR=173;
 const ZONES=[
   {name:'Z1',title:'Recovery',range:'<138',min:0,max:137,color:'oklch(0.78 0.11 210)'},
@@ -304,13 +343,49 @@ function renderDashboard(){
   const bestEasyHR=easy.length?easy.reduce((b,r)=>r.hr<b.hr?r:b,easy[0]):RUNS[0];
   const totalKm=RUNS.reduce((s,r)=>s+r.dist,0),avgPaceSec=avg(paces),avgHR=Math.round(avg(hrs));
   const half=Math.floor(RUNS.length/2);
-  const firstEff=avg(RUNS.slice(0,half).map(r=>r.efficiency))||1,lastEff=avg(RUNS.slice(half).map(r=>r.efficiency));
-  const effChange=((lastEff-firstEff)/firstEff)*100;
   const hrTrend=Math.round(avg(RUNS.slice(half).map(r=>r.hr))-avg(RUNS.slice(0,half).map(r=>r.hr)));
+  const lastRun=RUNS[RUNS.length-1];
+
+  // Aerobic gain measured in a controlled band (HR 128–140, ≥5 km) so one
+  // hot day or tempo effort can't skew the headline number.
+  const BAND_LO=128,BAND_HI=140,band=RUNS.filter(r=>r.hr>=BAND_LO&&r.hr<=BAND_HI&&r.dist>=5);
+  const bh=Math.floor(band.length/2),bFirst=band.slice(0,bh),bLast=band.slice(bh);
+  const firstEff=avg(bFirst.map(r=>r.efficiency))||1,lastEff=avg(bLast.map(r=>r.efficiency));
+  const effChange=((lastEff-firstEff)/firstEff)*100;
+  const bFirstPace=secToPace(avg(bFirst.map(r=>r.paceSec))),bLastPace=secToPace(avg(bLast.map(r=>r.paceSec)));
+  const bandHR=Math.round(avg(band.map(r=>r.hr)));
+
+  // Weekly volume + ramp guard
+  const DAY=864e5,now=new Date();
+  const monday=d=>{const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;};
+  const wkMap=new Map();
+  RUNS.forEach(r=>{if(!wkMap.has(r.week))wkMap.set(r.week,{week:r.week,km:0,runs:0,start:r.dateObj});const w=wkMap.get(r.week);w.km+=r.dist;w.runs++;});
+  WEEKSTATS=[...wkMap.values()];
+  const lastWk=WEEKSTATS[WEEKSTATS.length-1];
+  lastWk.inProgress=now-monday(lastRun.dateObj)<7*DAY&&now>=monday(lastRun.dateObj);
+  WEEKSTATS.forEach((w,i)=>{const prev=WEEKSTATS.slice(Math.max(0,i-4),i);w.trail=prev.length?avg(prev.map(p=>p.km)):null;});
+  const complete=WEEKSTATS.filter(w=>!w.inProgress);
+  const lastFull=complete[complete.length-1]||null;
+  const ramp=lastFull&&lastFull.trail?lastFull.km/lastFull.trail:null;
+
+  // Easy-day discipline: easy-tagged runs in the last 21 training days
+  const anchor=lastRun.dateObj;
+  const recentEasy=RUNS.filter(r=>r.type==='Easy'&&anchor-r.dateObj<=20*DAY);
+  const discOK=recentEasy.filter(r=>r.hr<=140).length;
+  const discPct=recentEasy.length?Math.round(discOK/recentEasy.length*100):100;
+  const leaks=recentEasy.length-discOK;
+
+  // Long-run recency
+  const longs=RUNS.filter(r=>r.dist>=13);
+  const lastLong=longs.length?longs[longs.length-1]:null;
+  const longGap=lastLong?Math.floor((now-lastLong.dateObj)/DAY):null;
+
+  // Heat cost: pace vs temperature inside the controlled band
+  const heatRuns=band.filter(r=>r.temp!=null);
+  const heatSlope=heatRuns.length>=8?linReg(heatRuns.map(r=>r.temp),heatRuns.map(r=>r.paceSec)).slope:null;
   const last3=RUNS.slice(-3),prior3=RUNS.slice(-6,-3);
   const roll3HR=Math.round(avg(last3.map(r=>r.hr))-avg(prior3.map(r=>r.hr)));
   const roll3Pace=Math.round(avg(last3.map(r=>r.paceSec))-avg(prior3.map(r=>r.paceSec)));
-  const lastRun=RUNS[RUNS.length-1];
   ZONES.forEach(z=>{z.count=RUNS.filter(r=>r.hr>=z.min&&r.hr<=z.max).length;z.pct=RUNS.length?(z.count/RUNS.length)*100:0;});
 
   document.getElementById('status-dot').className='dot';
@@ -331,16 +406,70 @@ function renderDashboard(){
   document.getElementById('pb-pace-sub').textContent=bestEasyPace.date+' · '+bestEasyPace.dist.toFixed(1)+' km';
   document.getElementById('pb-hr').textContent=bestEasyHR.hr;
   document.getElementById('pb-hr-sub').textContent=bestEasyHR.date+' · '+bestEasyHR.pace+'/km';
+  // ── Coach's board ──
+  const setPill=(id,tone,label)=>{
+    const el=document.getElementById(id);
+    const c=tone==='good'?'var(--good)':tone==='warn'?'var(--amber)':'var(--coral)';
+    el.textContent=label;el.style.color=c;
+    el.closest('.vcard').style.setProperty('--accent',c);
+  };
   const sign=effChange>=0?'+':'−';
   document.getElementById('eff-score').innerHTML=sign+Math.abs(effChange).toFixed(1)+'<span>%</span>';
-  document.getElementById('eff-sub').textContent=(effChange>0?'Improving':effChange<0?'Regressing':'Flat')+' since block start';
-  document.getElementById('eff-foot').textContent=`Speed per heartbeat · first ${half} runs vs last ${RUNS.length-half}`;
+  document.getElementById('eff-sub').textContent=`${bFirstPace} → ${bLastPace} /km at ~${bandHR} bpm`;
+  document.getElementById('eff-foot').textContent=`Speed per heartbeat · HR ${BAND_LO}–${BAND_HI}, ≥5 km · first ${bh} vs last ${band.length-bh} runs`;
   const ringLen=238.76,ringPct=Math.min(1,Math.abs(effChange)/8),ring=document.getElementById('eff-ring');
   ring.style.stroke=effChange>=0?'var(--good)':'var(--bad)';
   setTimeout(()=>{ring.style.transition='stroke-dashoffset 1s ease-out';ring.style.strokeDashoffset=ringLen*(1-ringPct);},50);
   document.getElementById('eff-ring-label').textContent=sign+Math.abs(effChange).toFixed(0)+'%';
   document.getElementById('eff-ring-label').style.color=effChange>=0?'var(--good)':'var(--bad)';
-  const coachMsg=hrTrend<-4?`Fitness building. HR down ${Math.abs(hrTrend)} bpm across the block. Stay patient — 60 min easy, keep HR in Z1–Z2 (sub-156).`:hrTrend>4?`HR creeping up ${hrTrend} bpm. Recovery day — 40 min pure Z1, hard cap at 138.`:`Base holding. Keep the cadence: 55 min easy, stay below ${LT_HR-17} (top of Z2), cadence ~180.`;
+  setPill('v-base-pill',effChange>=2?'good':effChange>=0?'warn':'bad',effChange>=2?'BUILDING':effChange>=0?'FLAT':'FADING');
+
+  document.getElementById('v-disc-num').textContent=discPct+'%';
+  document.getElementById('v-disc-sub').textContent=recentEasy.length?`${discOK} of ${recentEasy.length} easy runs stayed ≤140 bpm`:'No easy runs in window';
+  setPill('v-disc-pill',discPct>=90?'good':discPct>=70?'warn':'bad',discPct>=90?'ON TRACK':discPct>=70?'WATCH':'ACT');
+
+  if(ramp!=null){
+    document.getElementById('v-ramp-num').textContent=ramp.toFixed(2)+'×';
+    document.getElementById('v-ramp-sub').textContent=`${lastFull.week}: ${lastFull.km.toFixed(0)} km vs ${lastFull.trail.toFixed(0)} km avg`;
+    setPill('v-ramp-pill',ramp>=0.8&&ramp<=1.25?'good':ramp<0.6?'bad':ramp>1.4?'bad':'warn',ramp<0.6?'COLLAPSED':ramp<0.8?'FALLING':ramp>1.4?'SPIKING':ramp>1.25?'HIGH':'STEADY');
+  } else {
+    document.getElementById('v-ramp-num').textContent='—';
+    document.getElementById('v-ramp-sub').textContent='Not enough weeks yet';
+    setPill('v-ramp-pill','warn','N/A');
+  }
+
+  if(longGap!=null){
+    document.getElementById('v-long-num').textContent=longGap+' d';
+    document.getElementById('v-long-sub').textContent=`${lastLong.dist.toFixed(1)} km on ${lastLong.date}`;
+    setPill('v-long-pill',longGap<=7?'good':longGap<=10?'warn':'bad',longGap<=7?'FRESH':longGap<=10?'DUE':'OVERDUE');
+  } else {
+    document.getElementById('v-long-num').textContent='—';
+    document.getElementById('v-long-sub').textContent='No run ≥13 km yet';
+    setPill('v-long-pill','warn','N/A');
+  }
+
+  // Heat cost card
+  if(heatSlope!=null){
+    document.getElementById('heat-cost').innerHTML=(heatSlope>=0?'+':'−')+Math.abs(heatSlope).toFixed(1)+'<span class="unit">s/km per °C</span>';
+    document.getElementById('heat-sub').textContent=`Easy pace vs temperature · n=${heatRuns.length} runs`;
+  } else {
+    document.getElementById('heat-cost').textContent='—';
+    document.getElementById('heat-sub').textContent='Needs ≥8 easy runs with temperature';
+  }
+
+  // Coach message driven by the board, worst signal first
+  let coachMsg;
+  if((longGap!=null&&longGap>10)||(ramp!=null&&ramp<0.6)){
+    coachMsg=`Rhythm first. ${lastFull?`Last full week was ${lastFull.km.toFixed(0)} km against a ${lastFull.trail.toFixed(0)} km base`:'Volume has dropped'}${longGap>10?` and the long run is ${longGap} days overdue`:''}. This week: four easy runs under 140 plus a 14 km long run under 145 — volume before speed.`;
+  } else if(discPct<70){
+    coachMsg=`Easy days are leaking — ${leaks} of ${recentEasy.length} went over 140 in three weeks. The base came from disciplined sub-140 running. Next session: 50 min, hard cap 138, leave the watch face on HR only.`;
+  } else if(discPct<90){
+    coachMsg=`Base is building — ${bFirstPace} → ${bLastPace} at ~${bandHR} bpm — but ${leaks} easy ${leaks===1?'run':'runs'} leaked over 140. Give the speed a sanctioned outlet: one quality day (5 × 4 min at 5:20), everything else under 140.`;
+  } else if(effChange>=2){
+    coachMsg=`The quiet math is working: ${bFirstPace} → ${bLastPace} at the same ~${bandHR} bpm. Don't change anything — next session 60 min easy, sub-140, cadence ~180.`;
+  } else {
+    coachMsg=`Base holding. Keep the cadence: 55 min easy, stay below ${LT_HR-17} (top of Z2), cadence ~180.`;
+  }
   document.getElementById('coach-msg').textContent=coachMsg;
 
   // Dynamic date range — auto-updates when runs are added
@@ -353,7 +482,8 @@ function renderDashboard(){
 
   const tickerBar=document.getElementById('ticker-bar');tickerBar.innerHTML='';
   RUNS.forEach(r=>{
-    const chip=document.createElement('div');chip.className='chip';chip.dataset.idx=r.idx;
+    const chip=document.createElement('button');chip.className='chip';chip.dataset.idx=r.idx;
+    chip.style.border='none';chip.style.padding='0';chip.setAttribute('aria-label',`${r.date}, ${r.dist.toFixed(1)} km`);
     chip.style.flexGrow=r.dist;
     chip.style.background=r.hr>=145?'oklch(0.68 0.18 25 / 0.7)':r.hr<=134?'oklch(0.78 0.14 155 / 0.7)':'oklch(0.82 0.15 75 / 0.7)';
     chip.textContent=r.dist.toFixed(1);chip.title=`${r.date} · ${r.dist.toFixed(2)}km · ${r.pace}/km · ${r.hr}bpm`;
@@ -368,8 +498,6 @@ function renderDashboard(){
   });
   document.getElementById('clear-zone').onclick=()=>setZoneFilter(null);
   renderLog(bestEasyPace,bestEasyHR);
-  // Defer charts by two frames — browser must layout the newly-visible canvas
-  // before Chart.js can read its dimensions. Sync boot() skips this otherwise.
   renderCharts();
 }
 
@@ -404,6 +532,7 @@ function setSelected(idx){
   selectedIdx=idx;
   document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('sel',Number(el.dataset.idx)===idx));
   document.querySelectorAll('.log-row.body').forEach(el=>el.classList.toggle('sel',Number(el.dataset.idx)===idx));
+  if(idx!==null){const row=document.querySelector(`.log-row.body[data-idx="${idx}"]`);if(row)row.scrollIntoView({block:'nearest',behavior:'smooth'});}
   if(hrPaceChart){hrPaceChart.setActiveElements(idx===null?[]:[{datasetIndex:0,index:idx},{datasetIndex:1,index:idx}]);hrPaceChart.update();}
   if(scatterChart){scatterChart.data.datasets[0].backgroundColor=RUNS.map((_,i)=>i===idx?'#fff':'rgba(216,103,78,0.92)');scatterChart.data.datasets[0].pointRadius=RUNS.map((_,i)=>i===idx?8:5);scatterChart.update();}
 }
@@ -413,7 +542,27 @@ function linReg(xs,ys){const n=xs.length,sx=xs.reduce((a,x)=>a+x,0),sy=ys.reduce
 function renderCharts(){
   const INK='#f2efe8',MUTED='#a6a49c',FAINT='#6b6962',LINE='#2a2b2e',CORAL='#d8674e',AMBER='#e8c25e';
   Chart.defaults.color=MUTED;Chart.defaults.font.family="'JetBrains Mono',ui-monospace,monospace";Chart.defaults.font.size=10;
-  if(hrPaceChart)hrPaceChart.destroy();if(scatterChart)scatterChart.destroy();
+  if(hrPaceChart)hrPaceChart.destroy();if(scatterChart)scatterChart.destroy();if(volChart)volChart.destroy();
+  // Weekly volume with ramp guard: each bar judged against its trailing 4-wk avg
+  const GOODC='#8bb28a';
+  const volColors=WEEKSTATS.map(w=>{
+    if(w.inProgress)return 'rgba(166,164,156,0.28)';
+    if(w.trail==null)return 'rgba(139,178,138,0.5)';
+    const r=w.km/w.trail;
+    if(r<0.6)return 'rgba(198,107,107,0.85)';
+    if(r>1.4)return 'rgba(232,194,94,0.85)';
+    if(r<0.8||r>1.25)return 'rgba(232,194,94,0.5)';
+    return 'rgba(139,178,138,0.7)';
+  });
+  volChart=new Chart(document.getElementById('volChart'),{type:'bar',data:{labels:WEEKSTATS.map(w=>w.week.replace('Week ','W')),datasets:[
+    {label:'km',data:WEEKSTATS.map(w=>+w.km.toFixed(1)),backgroundColor:volColors,borderRadius:4,borderSkipped:false,order:1},
+    {type:'line',label:'4-wk avg',data:WEEKSTATS.map(w=>w.trail!=null?+w.trail.toFixed(1):null),borderColor:'rgba(242,239,232,0.35)',borderDash:[7,4],pointRadius:0,borderWidth:1.5,tension:0,spanGaps:true,order:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,
+      callbacks:{label:ctx=>{const w=WEEKSTATS[ctx.dataIndex];if(ctx.dataset.type==='line')return`4-wk avg: ${ctx.parsed.y} km`;
+        const vs=w.trail!=null?` · ${Math.round(w.km/w.trail*100)}% of avg`:'';
+        return`${w.km.toFixed(1)} km · ${w.runs} run${w.runs>1?'s':''}${vs}${w.inProgress?' · in progress':''}`;}}}},
+    scales:{x:{grid:{display:false},ticks:{color:FAINT}},y:{grid:{color:LINE},ticks:{color:FAINT,callback:v=>v+' km'},beginAtZero:true}}}});
   const labels=RUNS.map(r=>r.date.replace(/-\d{2}$/,''));
   const _idxs=RUNS.map((_,i)=>i),_hrs=RUNS.map(r=>r.hr),_paces=RUNS.map(r=>r.paceSec);
   const _lrHR=linReg(_idxs,_hrs),_lrPace=linReg(_idxs,_paces);
@@ -424,18 +573,6 @@ function renderCharts(){
   scatterChart=new Chart(document.getElementById('scatter'),{type:'scatter',data:{datasets:[{label:'Sessions',data:RUNS.map((r,i)=>({x:r.paceSec,y:r.hr,idx:i})),backgroundColor:'rgba(216,103,78,0.85)',borderColor:'#0f1012',borderWidth:1.5,pointRadius:5,pointHoverRadius:8},{type:'line',label:'Trend',data:[{x:_minP,y:+(_lrScat.slope*_minP+_lrScat.intercept).toFixed(1)},{x:_maxP,y:+(_lrScat.slope*_maxP+_lrScat.intercept).toFixed(1)}],borderColor:'rgba(242,239,232,0.22)',borderDash:[7,4],pointRadius:0,borderWidth:1.5,tension:0,order:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1f2023',borderColor:LINE,borderWidth:1,padding:10,titleColor:INK,bodyColor:MUTED,callbacks:{title:ctx=>{const r=RUNS[ctx[0].raw.idx];return r.date+' · '+r.week;},label:ctx=>{const r=RUNS[ctx.raw.idx];return[`Pace: ${r.pace}/km`,`HR: ${r.hr} bpm`,`${r.dist.toFixed(1)} km · ${r.type}`];}}}},scales:{x:{reverse:true,grid:{color:LINE},ticks:{color:FAINT,callback:v=>secToPace(Math.round(v))},title:{display:true,text:'Pace / km (← faster)',color:MUTED}},y:{grid:{color:LINE},ticks:{color:FAINT},title:{display:true,text:'HR (bpm)',color:MUTED}}},onClick:(e,elems)=>{if(elems.length)setSelected(elems[0].element.$context.raw.idx);}}});
 }
 
-function loadCharts(){
-  if(typeof Chart!=='undefined'){
-    renderCharts();
-  } else {
-    // Chart.js didn't load from static tag — try dynamic injection
-    const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js';
-    s.onload=()=>renderCharts();
-    s.onerror=()=>console.warn('Chart.js failed to load');
-    document.head.appendChild(s);
-  }
-}
 
 // ── COROS charts ─────────────────────────────────────────────────────────────
 
@@ -533,8 +670,17 @@ async function initCoros(){
 
 function boot(){
   RUNS = RUNS_EMBEDDED;
-  renderDashboard();
-  initCoros();
+  if(typeof Chart!=='undefined'){
+    renderDashboard();
+    initCoros();
+  } else {
+    // CDN tag failed or hasn't executed — retry via dynamic injection
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js';
+    s.onload=()=>{renderDashboard();initCoros();};
+    s.onerror=()=>console.warn('Chart.js failed to load');
+    document.head.appendChild(s);
+  }
 }
 
 window.addEventListener('load', boot);
