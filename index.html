@@ -1,20 +1,4 @@
-<!doctype html><script type="application/json" id="cowork-artifact-meta">
-{
-  "name": "Running Dashboard",
-  "schemaVersion": 1,
-  "description": "Running training dashboard — aerobic block since Mar 2026. Strava runs with HR/pace/distance charts, aerobic efficiency trend, zone breakdown, and session log. COROS live panels: daily resting HR trend + sleep HRV with personal normal range band.",
-  "mcpTools": [
-    "mcp__0dd10bbf-4a70-4038-8185-6894abca63f0__queryRestingHeartRate",
-    "mcp__0dd10bbf-4a70-4038-8185-6894abca63f0__querySleepHrv",
-    "mcp__0dd10bbf-4a70-4038-8185-6894abca63f0__queryRecoveryStatus",
-    "mcp__0dd10bbf-4a70-4038-8185-6894abca63f0__querySleepData",
-    "mcp__0dd10bbf-4a70-4038-8185-6894abca63f0__queryTrainingLoadAssessment"
-  ],
-  "mcpServerNames": [
-    "Coros"
-  ]
-}
-</script>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -146,7 +130,7 @@ html, body { margin:0; padding:0; background:#fafaf7; }
   </div>
 </div></section>
 
-<div id="dashboard" style="display:none;">
+<div id="dashboard">
   <div class="ticker">
     <div class="ticker-head"><span class="overline">KILOMETER TICKER</span><span class="mono" style="color:var(--coral);font-size:11px;"><span id="ticker-km">—</span> KM TOTAL</span></div>
     <div class="ticker-bar" id="ticker-bar"></div>
@@ -333,9 +317,14 @@ const RUNS_EMBEDDED = [
   {date:'1-Jul-26',week:'Week 15',pace:'6:42',hr:126,dist:7.48, menu:'Evening Run',  type:'Easy',notes:'',temp:26,    double:false},
   {date:'4-Jul-26',week:'Week 15',pace:'6:52',hr:127,dist:14.62, menu:'Morning Run',  type:'Long',notes:'',temp:28,    double:false},
   {date:'5-Jul-26',week:'Week 15',pace:'7:08',hr:125,dist:7.79, menu:'Morning Run',  type:'Easy',notes:'',temp:29,    double:false},
+  {date:'6-Jul-26',week:'Week 16',pace:'7:10',hr:126,dist:7.68, menu:'Morning Run',  type:'Easy',notes:'',temp:28,    double:false},
+  {date:'7-Jul-26',week:'Week 16',pace:'5:33',hr:165,dist:6.87, menu:'Afternoon Run',  type:'Tempo',notes:'',temp:32,    double:false},
+  {date:'8-Jul-26',week:'Week 16',pace:'6:34',hr:129,dist:8.41, menu:'Evening Run',  type:'Easy',notes:'',temp:30,    double:false},
+  {date:'11-Jul-26',week:'Week 16',pace:'5:34',hr:158,dist:15.04, menu:'Morning Run',  type:'Long',notes:'',temp:27,    double:false},
+  {date:'12-Jul-26',week:'Week 16',pace:'7:00',hr:128,dist:7.88, menu:'Morning Run',  type:'Easy',notes:'',temp:29,    double:false},
 ];
 
-// ── COROS snapshot · updated 5-Jul-26 ────────────────────────────────────────
+// ── COROS snapshot · updated 12-Jul-26 ───────────────────────────────────────
 const RHR_EMBEDDED = [
   {date:'2026-03-20',value:50},{date:'2026-03-21',value:50},{date:'2026-03-22',value:54},{date:'2026-03-23',value:52},
   {date:'2026-03-24',value:54},{date:'2026-03-25',value:53},{date:'2026-03-26',value:55},{date:'2026-03-27',value:52},
@@ -365,6 +354,8 @@ const RHR_EMBEDDED = [
   {date:'2026-06-24',value:51},{date:'2026-06-25',value:51},{date:'2026-06-27',value:52},{date:'2026-06-28',value:50},
   {date:'2026-06-29',value:54},{date:'2026-06-30',value:52},{date:'2026-07-01',value:54},{date:'2026-07-02',value:50},
   {date:'2026-07-03',value:52},{date:'2026-07-04',value:52},{date:'2026-07-05',value:51},
+  {date:'2026-07-06',value:53},{date:'2026-07-07',value:51},{date:'2026-07-08',value:51},{date:'2026-07-09',value:51},
+  {date:'2026-07-10',value:52},{date:'2026-07-11',value:49},{date:'2026-07-12',value:51},
 ];
 const HRV_EMBEDDED = [
   {date:'2026-03-20',value:59},{date:'2026-03-21',value:60},{date:'2026-03-22',value:56},{date:'2026-03-23',value:55},
@@ -395,8 +386,10 @@ const HRV_EMBEDDED = [
   {date:'2026-06-24',value:65},{date:'2026-06-25',value:68},{date:'2026-06-27',value:51},{date:'2026-06-28',value:67},
   {date:'2026-06-29',value:64},{date:'2026-06-30',value:57},{date:'2026-07-01',value:44},{date:'2026-07-02',value:60},
   {date:'2026-07-03',value:52},{date:'2026-07-04',value:52},{date:'2026-07-05',value:66},
+  {date:'2026-07-06',value:59},{date:'2026-07-07',value:66},{date:'2026-07-08',value:57},{date:'2026-07-09',value:55},
+  {date:'2026-07-10',value:45},{date:'2026-07-11',value:54},{date:'2026-07-12',value:55},
 ];
-const HRV_META = {baseline:59,rangeMin:51,rangeMax:67};
+const HRV_META = {baseline:58,rangeMin:50,rangeMax:66};
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
