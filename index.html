@@ -138,6 +138,44 @@ html, body { margin:0; padding:0; background:#fafaf7; }
 .phase-blurb{font-size:12px;color:var(--ink-muted);margin-top:6px;line-height:1.4;}
 @media(max-width:900px){.phases{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:560px){.payoff{grid-template-columns:1fr;padding:18px;}.payoff-line{font-size:16px;}}
+/* Run detail drawer */
+.rd-backdrop{position:fixed;inset:0;z-index:50;background:rgba(5,6,9,0.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.rd-backdrop.open{opacity:1;pointer-events:auto;}
+.rd{position:fixed;z-index:51;top:12px;right:12px;bottom:12px;width:min(440px,calc(100vw - 24px));background:#12151c;border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,0.55);display:flex;flex-direction:column;transform:translateX(calc(100% + 24px));transition:transform 0.32s cubic-bezier(.22,.68,0,1);visibility:hidden;}
+.rd.open{transform:none;visibility:visible;}
+.rd-head{padding:18px 20px 14px;border-bottom:1px solid var(--line);}
+.rd-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.rd-nav{display:flex;gap:6px;}
+.rd-btn{width:34px;height:34px;border-radius:999px;border:1px solid var(--line);background:var(--bg-2);color:var(--ink);font-family:var(--mono);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s,color 0.15s;}
+.rd-btn:hover:not(:disabled){border-color:var(--coral);color:var(--coral);}
+.rd-btn:disabled{opacity:0.3;cursor:default;}
+.rd-title{font-family:var(--serif);font-size:24px;font-weight:500;line-height:1.15;margin:4px 0 6px;}
+.rd-sub{font-family:var(--mono);font-size:11px;color:var(--ink-muted);letter-spacing:0.04em;}
+.rd-body{padding:16px 20px 22px;overflow-y:auto;flex:1;overscroll-behavior:contain;}
+.rd-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.rd-hero > div{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:10px 10px 9px;}
+.rd-hero .v{font-family:var(--mono);font-size:19px;font-weight:500;letter-spacing:-0.02em;}
+.rd-hero .l{font-family:var(--mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-muted);margin-top:2px;}
+.rd-sec{margin-bottom:18px;}
+.rd-sec .overline{margin-bottom:8px;display:block;}
+.rd-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+.rd-cell{background:#12151c;padding:9px 12px;}
+.rd-cell:last-child:nth-child(odd){grid-column:span 2;}
+.rd-cell .k{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);}
+.rd-cell .v{font-family:var(--mono);font-size:14px;margin-top:2px;}
+.rd-cell .v small{font-size:10.5px;color:var(--ink-muted);margin-left:3px;}
+.rd-te{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.rd-te-bar{flex:1;height:4px;border-radius:2px;background:var(--bg-3);overflow:hidden;}
+.rd-te-bar i{display:block;height:100%;border-radius:2px;}
+.rd-read{font-family:var(--serif);font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg-2);border:1px solid var(--line);border-left:2px solid var(--coral);border-radius:12px;padding:12px 14px;}
+.rd-note{font-size:12.5px;color:var(--ink-muted);line-height:1.5;}
+.rd-src{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-top:14px;letter-spacing:0.04em;line-height:1.5;}
+@media(max-width:720px){
+  .rd{top:auto;left:0;right:0;bottom:0;width:auto;max-height:88vh;border-radius:22px 22px 0 0;transform:translateY(100%);}
+  .rd-hero .v{font-size:16px;}
+  .rd-title{font-size:21px;}
+}
+@media(prefers-reduced-motion:reduce){.rd,.rd-backdrop{transition:none;}}
 @media(max-width:720px){
   .page{padding:12px 12px 36px;} .theme-dark{padding:18px 16px 30px;border-radius:22px;}
   .mast{padding:28px 20px 22px;min-height:200px;margin-bottom:14px;} .mast h1{font-size:26px;line-height:1.1;margin-bottom:12px;}
@@ -280,10 +318,27 @@ html, body { margin:0; padding:0; background:#fafaf7; }
     <div class="zones" id="zones"></div>
   </div>
   <div class="card">
-    <div class="section-head"><div><div class="overline">Session log</div><div class="chart-sub" id="log-sub">All runs, latest first. Click a row to highlight it.</div></div></div>
+    <div class="section-head"><div><div class="overline">Session log</div><div class="chart-sub" id="log-sub">All runs, latest first. Tap any run for its full breakdown.</div></div></div>
     <div class="log" id="log"></div>
   </div>
 </div>
+<!-- Run detail drawer — opened by clicking a run in the log, the ticker or a chart -->
+<div class="rd-backdrop" id="rd-backdrop"></div>
+<aside class="rd" id="rd" role="dialog" aria-modal="true" aria-labelledby="rd-title" aria-hidden="true">
+  <div class="rd-head">
+    <div class="rd-top">
+      <span class="overline" id="rd-kicker">—</span>
+      <div class="rd-nav">
+        <button class="rd-btn" id="rd-prev" type="button" aria-label="Previous (older) run">←</button>
+        <button class="rd-btn" id="rd-next" type="button" aria-label="Next (newer) run">→</button>
+        <button class="rd-btn" id="rd-close" type="button" aria-label="Close details">✕</button>
+      </div>
+    </div>
+    <h2 class="rd-title" id="rd-title">—</h2>
+    <div class="rd-sub" id="rd-sub">—</div>
+  </div>
+  <div class="rd-body" id="rd-body"></div>
+</aside>
 <footer class="site-foot">
   <span id="footer-range">Aerobic block · Mar–May 2026</span>
   <a href="https://docs.google.com/spreadsheets/d/1vLDC-slyVKB6uDWwIMkCFq9uxu6PN4-A/edit?gid=352326790#gid=352326790" target="_blank" rel="noopener">Training Log →</a>
@@ -377,65 +432,65 @@ const RUNS_EMBEDDED = [
   {date:'11-Jul-26',week:'Week 16',pace:'5:34',hr:158,dist:15.04, menu:'Morning Run',  type:'Long',notes:'',temp:27,    double:false},
   {date:'12-Jul-26',week:'Week 16',pace:'7:00',hr:128,dist:7.88, menu:'Morning Run',  type:'Easy',notes:'',temp:29,    double:false},
   // ── Jul 2026 · COROS ─────────────────────────────────────────────────
-  {date:'13-Jul-26',week:'Week 17',pace:'7:07',hr:126,dist:4.39,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'13-Jul-26',week:'Week 17',pace:'7:07',hr:126,dist:4.39,menu:'Easy Run',type:'Easy',notes:'',temp:29,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'14-Jul-26',week:'Week 17',pace:'5:18',hr:155,dist:2.46,menu:'Pyramid fartlek',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
-  {date:'16-Jul-26',week:'Week 17',pace:'6:16',hr:130,dist:6.40,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'19-Jul-26',week:'Week 17',pace:'5:28',hr:169,dist:21.55,time:'1:57:40',menu:'Sepang half marathon',type:'Race',notes:'21.5 km in 1:57:40',src:'COROS',double:false},
+  {date:'16-Jul-26',week:'Week 17',pace:'6:16',hr:130,dist:6.40,menu:'Easy Run',type:'Easy',notes:'',temp:29,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'19-Jul-26',week:'Week 17',pace:'5:28',hr:169,dist:21.55,time:'1:57:40',menu:'Sepang half marathon',type:'Race',notes:'21.5 km in 1:57:40',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
   // ── Aug 2026 · COROS ─────────────────────────────────────────────────
-  {date:'1-Aug-26',week:'Week 19',pace:'6:25',hr:148,dist:8.13,menu:'Medina Run',type:'Easy',notes:'Medina',src:'COROS',double:false},
-  {date:'4-Aug-26',week:'Week 20',pace:'6:28',hr:138,dist:8.51,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'5-Aug-26',week:'Week 20',pace:'6:42',hr:138,dist:8.21,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'10-Aug-26',week:'Week 21',pace:'6:42',hr:135,dist:6.36,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'1-Aug-26',week:'Week 19',pace:'6:25',hr:148,dist:8.13,menu:'Medina Run',type:'Easy',notes:'Medina',temp:28,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'4-Aug-26',week:'Week 20',pace:'6:28',hr:138,dist:8.51,menu:'Easy Run',type:'Easy',notes:'',temp:29,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'5-Aug-26',week:'Week 20',pace:'6:42',hr:138,dist:8.21,menu:'Easy Run',type:'Easy',notes:'',temp:29,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'10-Aug-26',week:'Week 21',pace:'6:42',hr:135,dist:6.36,menu:'Easy Run',type:'Easy',notes:'',temp:29,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'11-Aug-26',week:'Week 21',pace:'7:17',hr:127,dist:3.01,menu:'Easy Run',type:'Easy',notes:'Treadmill',src:'COROS',double:false},
-  {date:'12-Aug-26',week:'Week 21',pace:'6:33',hr:140,dist:8.41,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'12-Aug-26',week:'Week 21',pace:'6:33',hr:140,dist:8.41,menu:'Easy Run',type:'Easy',notes:'',temp:31,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'13-Aug-26',week:'Week 21',pace:'6:14',hr:157,dist:5.78,menu:'Threshold 15′ × 2',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
-  {date:'15-Aug-26',week:'Week 21',pace:'6:31',hr:148,dist:25.03,menu:'Long Run',type:'Long',notes:'Sepang',src:'COROS',double:false},
-  {date:'17-Aug-26',week:'Week 22',pace:'7:07',hr:125,dist:4.27,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'18-Aug-26',week:'Week 22',pace:'6:42',hr:130,dist:7.47,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'19-Aug-26',week:'Week 22',pace:'6:16',hr:130,dist:7.99,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'21-Aug-26',week:'Week 22',pace:'6:41',hr:127,dist:4.73,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'22-Aug-26',week:'Week 22',pace:'6:59',hr:134,dist:14.32,menu:'Long Run',type:'Long',notes:'',src:'COROS',double:false},
-  {date:'23-Aug-26',week:'Week 22',pace:'7:09',hr:119,dist:7.01,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'24-Aug-26',week:'Week 23',pace:'6:25',hr:133,dist:7.81,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'25-Aug-26',week:'Week 23',pace:'5:40',hr:166,dist:5.55,menu:'Mile repeats',type:'Tempo',notes:'Track · main set',src:'COROS',double:false},
+  {date:'15-Aug-26',week:'Week 21',pace:'6:31',hr:148,dist:25.03,menu:'Long Run',type:'Long',notes:'Sepang',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'17-Aug-26',week:'Week 22',pace:'7:07',hr:125,dist:4.27,menu:'Easy Run',type:'Easy',notes:'',temp:31,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'18-Aug-26',week:'Week 22',pace:'6:42',hr:130,dist:7.47,menu:'Easy Run',type:'Easy',notes:'',temp:29,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'19-Aug-26',week:'Week 22',pace:'6:16',hr:130,dist:7.99,menu:'Easy Run',type:'Easy',notes:'',temp:29,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'21-Aug-26',week:'Week 22',pace:'6:41',hr:127,dist:4.73,menu:'Easy Run',type:'Easy',notes:'',temp:30,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'22-Aug-26',week:'Week 22',pace:'6:59',hr:134,dist:14.32,menu:'Long Run',type:'Long',notes:'',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'23-Aug-26',week:'Week 22',pace:'7:09',hr:119,dist:7.01,menu:'Easy Run',type:'Easy',notes:'',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'24-Aug-26',week:'Week 23',pace:'6:25',hr:133,dist:7.81,menu:'Easy Run',type:'Easy',notes:'',temp:31,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'25-Aug-26',week:'Week 23',pace:'5:40',hr:166,dist:5.55,menu:'Mile repeats',type:'Tempo',notes:'Track · main set',temp:26,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'26-Aug-26',week:'Week 23',pace:'7:01',hr:131,dist:4.30,menu:'Easy Run',type:'Easy',notes:'Treadmill',src:'COROS',double:false},
   {date:'27-Aug-26',week:'Week 23',pace:'6:18',hr:161,dist:5.40,menu:'Threshold 10′ × 3',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
-  {date:'29-Aug-26',week:'Week 23',pace:'6:10',hr:150,dist:24.03,menu:'Long Run',type:'Long',notes:'',src:'COROS',double:false},
-  {date:'30-Aug-26',week:'Week 23',pace:'8:37',hr:112,dist:5.32,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'31-Aug-26',week:'Week 24',pace:'6:56',hr:135,dist:6.50,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'29-Aug-26',week:'Week 23',pace:'6:10',hr:150,dist:24.03,menu:'Long Run',type:'Long',notes:'',temp:26,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'30-Aug-26',week:'Week 23',pace:'8:37',hr:112,dist:5.32,menu:'Easy Run',type:'Easy',notes:'',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'31-Aug-26',week:'Week 24',pace:'6:56',hr:135,dist:6.50,menu:'Easy Run',type:'Easy',notes:'',temp:29,tempSrc:'Open-Meteo',src:'COROS',double:false},
   // ── Sep 2026 · COROS ─────────────────────────────────────────────────
   {date:'1-Sep-26',week:'Week 24',pace:'6:02',hr:161,dist:4.98,menu:'1.2 km × 6',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
   {date:'3-Sep-26',week:'Week 24',pace:'6:24',hr:156,dist:6.10,menu:'Threshold 10′ × 3',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
-  {date:'4-Sep-26',week:'Week 24',pace:'6:32',hr:129,dist:7.02,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'5-Sep-26',week:'Week 24',pace:'6:16',hr:147,dist:27.04,menu:'Long Run',type:'Long',notes:'',src:'COROS',double:false},
+  {date:'4-Sep-26',week:'Week 24',pace:'6:32',hr:129,dist:7.02,menu:'Easy Run',type:'Easy',notes:'',temp:24,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'5-Sep-26',week:'Week 24',pace:'6:16',hr:147,dist:27.04,menu:'Long Run',type:'Long',notes:'',temp:27,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'6-Sep-26',week:'Week 24',pace:'8:53',hr:112,dist:5.07,menu:'Easy Run',type:'Easy',notes:'Treadmill',src:'COROS',double:false},
-  {date:'7-Sep-26',week:'Week 25',pace:'6:10',hr:134,dist:8.12,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'7-Sep-26',week:'Week 25',pace:'6:10',hr:134,dist:8.12,menu:'Easy Run',type:'Easy',notes:'',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'8-Sep-26',week:'Week 25',pace:'6:13',hr:158,dist:6.58,menu:'Miles × 5',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
-  {date:'9-Sep-26',week:'Week 25',pace:'6:09',hr:130,dist:8.17,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'9-Sep-26',week:'Week 25',pace:'6:09',hr:130,dist:8.17,menu:'Easy Run',type:'Easy',notes:'',temp:26,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'10-Sep-26',week:'Week 25',pace:'5:24',hr:156,dist:6.31,menu:'Threshold 15′ × 2',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
-  {date:'12-Sep-26',week:'Week 25',pace:'6:10',hr:133,dist:8.12,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'13-Sep-26',week:'Week 25',pace:'6:10',hr:159,dist:30.72,menu:'Long Run 30 km',type:'Long',notes:'Sepang',src:'COROS',double:false},
-  {date:'14-Sep-26',week:'Week 26',pace:'6:11',hr:132,dist:9.02,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'12-Sep-26',week:'Week 25',pace:'6:10',hr:133,dist:8.12,menu:'Easy Run',type:'Easy',notes:'',temp:24,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'13-Sep-26',week:'Week 25',pace:'6:10',hr:159,dist:30.72,menu:'Long Run 30 km',type:'Long',notes:'Sepang',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'14-Sep-26',week:'Week 26',pace:'6:11',hr:132,dist:9.02,menu:'Easy Run',type:'Easy',notes:'',temp:24,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'15-Sep-26',week:'Week 26',pace:'5:45',hr:155,dist:6.67,menu:'2 km × 4',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
-  {date:'16-Sep-26',week:'Week 26',pace:'6:05',hr:132,dist:9.05,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'16-Sep-26',week:'Week 26',pace:'6:05',hr:132,dist:9.05,menu:'Easy Run',type:'Easy',notes:'',temp:26,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'17-Sep-26',week:'Week 26',pace:'5:31',hr:157,dist:6.25,menu:'Threshold 10′ × 3',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
   {date:'19-Sep-26',week:'Week 26',pace:'6:10',hr:155,dist:30.02,menu:'Tempo Long Run 30 km',type:'Long',notes:'Treadmill',src:'COROS',double:false},
   {date:'22-Sep-26',week:'Week 27',pace:'5:40',hr:160,dist:8.93,menu:'Miles × 5',type:'Tempo',notes:'Treadmill · main set',src:'COROS',double:false},
-  {date:'23-Sep-26',week:'Week 27',pace:'6:14',hr:130,dist:9.67,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'25-Sep-26',week:'Week 27',pace:'7:45',hr:109,dist:3.02,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'26-Sep-26',week:'Week 27',pace:'6:43',hr:137,dist:15.02,menu:'Recovery Run 100′',type:'Long',notes:'',src:'COROS',double:false},
-  {date:'27-Sep-26',week:'Week 27',pace:'7:38',hr:135,dist:8.02,menu:'60′ Easy',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'28-Sep-26',week:'Week 28',pace:'6:19',hr:135,dist:9.53,menu:'60′ Easy',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'23-Sep-26',week:'Week 27',pace:'6:14',hr:130,dist:9.67,menu:'Easy Run',type:'Easy',notes:'',temp:24,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'25-Sep-26',week:'Week 27',pace:'7:45',hr:109,dist:3.02,menu:'Easy Run',type:'Easy',notes:'',temp:23,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'26-Sep-26',week:'Week 27',pace:'6:43',hr:137,dist:15.02,menu:'Recovery Run 100′',type:'Long',notes:'',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'27-Sep-26',week:'Week 27',pace:'7:38',hr:135,dist:8.02,menu:'60′ Easy',type:'Easy',notes:'',temp:27,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'28-Sep-26',week:'Week 28',pace:'6:19',hr:135,dist:9.53,menu:'60′ Easy',type:'Easy',notes:'',temp:24,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'30-Sep-26',week:'Week 28',pace:'6:24',hr:143,dist:8.13,menu:'Tempo fartlek 3:1',type:'Tempo',notes:'Treadmill',src:'COROS',double:false},
   // ── Oct 2026 · COROS ─────────────────────────────────────────────────
-  {date:'1-Oct-26',week:'Week 28',pace:'6:21',hr:131,dist:8.02,menu:'50′ Easy',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'2-Oct-26',week:'Week 28',pace:'6:41',hr:121,dist:4.53,menu:'40′ Easy',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'3-Oct-26',week:'Week 28',pace:'7:31',hr:114,dist:2.66,menu:'Shake-out',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'4-Oct-26',week:'Week 28',pace:'6:15',hr:166,dist:43.14,time:'4:29:41',menu:'KLSCM Full Marathon',type:'Race',notes:'Finish 4:29:41 · marathon PB',src:'COROS',double:false},
-  {date:'12-Oct-26',week:'Week 30',pace:'8:24',hr:123,dist:5.01,menu:'Easy return run',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'14-Oct-26',week:'Week 30',pace:'6:48',hr:132,dist:6.03,menu:'Easy + strength',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'15-Oct-26',week:'Week 30',pace:'6:29',hr:130,dist:6.03,menu:'Easy + strength',type:'Easy',notes:'',src:'COROS',double:false},
-  {date:'16-Oct-26',week:'Week 30',pace:'6:24',hr:131,dist:5.02,menu:'Easy Run',type:'Easy',notes:'',src:'COROS',double:false},
+  {date:'1-Oct-26',week:'Week 28',pace:'6:21',hr:131,dist:8.02,menu:'50′ Easy',type:'Easy',notes:'',temp:23,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'2-Oct-26',week:'Week 28',pace:'6:41',hr:121,dist:4.53,menu:'40′ Easy',type:'Easy',notes:'',temp:23,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'3-Oct-26',week:'Week 28',pace:'7:31',hr:114,dist:2.66,menu:'Shake-out',type:'Easy',notes:'',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'4-Oct-26',week:'Week 28',pace:'6:15',hr:166,dist:43.14,time:'4:29:41',menu:'KLSCM Full Marathon',type:'Race',notes:'Finish 4:29:41 · marathon PB',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'12-Oct-26',week:'Week 30',pace:'8:24',hr:123,dist:5.01,menu:'Easy return run',type:'Easy',notes:'',temp:25,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'14-Oct-26',week:'Week 30',pace:'6:48',hr:132,dist:6.03,menu:'Easy + strength',type:'Easy',notes:'',temp:23,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'15-Oct-26',week:'Week 30',pace:'6:29',hr:130,dist:6.03,menu:'Easy + strength',type:'Easy',notes:'',temp:23,tempSrc:'Open-Meteo',src:'COROS',double:false},
+  {date:'16-Oct-26',week:'Week 30',pace:'6:24',hr:131,dist:5.02,menu:'Easy Run',type:'Easy',notes:'',temp:23,tempSrc:'Open-Meteo',src:'COROS',double:false},
   {date:'18-Oct-26',week:'Week 30',pace:'7:01',hr:139,dist:5.02,menu:'Easy Run',type:'Easy',notes:'Treadmill',src:'COROS',double:false},
 ];
 
@@ -554,6 +609,142 @@ const HRV_EMBEDDED = [
 ];
 const HRV_META = {baseline:52,rangeMin:45,rangeMax:59}; // COROS assessment as of 2026-10-18
 
+// ── COROS per-run detail · keyed 'date|km' · values verbatim from getActivityDetail ──
+// t = workout time, tt = total elapsed, mp = moving pace, ap = grade-adjusted pace, best = best km,
+// cad spm, stride m, gct ground contact ms, vo vertical oscillation cm, vr vertical ratio %, pow W,
+// up/down elevation m, kcal, load = training load, ate/ante = aerobic/anaerobic training effect, rpe = perceived effort
+const RUN_DETAIL = {
+  '23-Mar-26|9.03':{t:'1:00:37',tt:'1:00:37',mp:'6:40',ap:'6:37',best:'6:22',cad:172,stride:0.87,gct:267,vo:8.7,vr:10.1,pow:207,up:58,down:61,kcal:675,load:89,ate:2.7,ante:0.7,focus:'Base',rpe:'Very Easy'},
+  '24-Mar-26|9.63':{t:'1:01:52',tt:'1:01:52',mp:'6:26',ap:'6:26',best:'6:14',cad:177,stride:0.88,gct:256,vo:8.4,vr:9.6,pow:213,up:0,down:0,kcal:706,load:105,ate:3.0,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '27-Mar-26|9.26':{t:'1:00:30',tt:'1:00:30',mp:'6:32',ap:'6:32',best:'6:13',cad:176,stride:0.87,gct:262,vo:8.5,vr:9.8,pow:210,up:0,down:4,kcal:681,load:98,ate:2.9,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '29-Mar-26|21.29':{t:'2:15:02',tt:'2:25:44',mp:'6:21',ap:'6:14',best:'5:30',cad:176,stride:0.9,gct:260,vo:7.9,vr:8.9,pow:218,up:303,down:321,kcal:1722,load:338,ate:4.6,ante:2.6,focus:'Base',rpe:'Very Easy'},
+  '30-Mar-26|6.03':{t:'45:56',tt:'45:56',mp:'7:39',best:'7:35',cad:174,stride:0.75,kcal:433,load:50,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '1-Apr-26|6.33':{t:'45:26',tt:'45:26',mp:'7:08',ap:'7:05',best:'6:42',cad:173,stride:0.8,gct:272,vo:8.5,vr:10.6,pow:194,up:49,down:50,kcal:438,load:46,ate:2.1,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '2-Apr-26|7.02':{t:'45:58',tt:'46:02',mp:'6:31',ap:'6:18',best:'6:12',cad:174,stride:0.88,gct:257,vo:8.4,vr:9.6,pow:215,up:106,down:98,kcal:528,load:91,ate:2.6,ante:1.3,focus:'Base',rpe:'Very Easy'},
+  '4-Apr-26|14.39':{t:'1:30:27',tt:'1:45:38',mp:'6:19',ap:'6:17',best:'5:24',cad:180,stride:0.88,gct:249,vo:7.9,vr:9.0,pow:217,up:36,down:42,kcal:1029,load:152,ate:3.4,ante:0.5,focus:'Base',rpe:'Very Easy'},
+  '5-Apr-26|4.11':{t:'30:11',tt:'30:11',mp:'7:17',ap:'7:16',best:'7:08',cad:173,stride:0.79,gct:268,vo:7.9,vr:10.0,pow:188,up:21,down:26,kcal:271,load:25,ate:1.6,ante:0.0,focus:'Recovery',rpe:'Very Easy'},
+  '6-Apr-26|7.03':{t:'50:33',tt:'50:33',mp:'7:12',best:'6:20',cad:176,stride:0.79,kcal:473,load:54,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '8-Apr-26|7.40':{t:'50:22',tt:'50:22',mp:'6:49',best:'6:35',cad:179,stride:0.82,kcal:485,load:59,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '10-Apr-26|7.64':{t:'50:23',tt:'50:23',mp:'6:36',ap:'6:26',best:'6:09',cad:178,stride:0.85,gct:256,vo:8.4,vr:9.9,pow:211,up:83,down:80,kcal:516,load:68,ate:2.4,ante:0.9,focus:'Base',rpe:'Very Easy'},
+  '11-Apr-26|7.70':{t:'50:17',tt:'50:17',mp:'6:30',ap:'6:33',best:'6:10',cad:176,stride:0.87,gct:261,vo:8.4,vr:9.6,pow:210,up:0,down:15,kcal:513,load:60,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '12-Apr-26|15.41':{t:'1:40:19',tt:'1:51:42',mp:'6:31',ap:'6:30',best:'5:40',cad:179,stride:0.86,gct:255,vo:8.0,vr:9.4,pow:210,up:51,down:66,kcal:1089,load:149,ate:3.3,ante:0.5,focus:'Base',rpe:'Very Easy'},
+  '13-Apr-26|8.60':{t:'55:26',tt:'55:26',mp:'6:26',ap:'6:29',best:'6:11',cad:173,stride:0.9,gct:261,vo:8.9,vr:9.9,pow:211,up:0,down:21,kcal:570,load:67,ate:2.4,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '15-Apr-26|6.71':{t:'45:04',tt:'46:22',mp:'6:44',best:'6:31',cad:180,stride:0.83,kcal:444,load:56,ate:2.3,ante:0.0,focus:'Base'},
+  '16-Apr-26|8.82':{t:'57:30',tt:'59:50',mp:'6:33',ap:'6:29',best:'6:07',cad:179,stride:0.86,gct:251,vo:8.0,vr:9.4,pow:210,up:29,down:29,kcal:688,load:98,ate:2.9,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '18-Apr-26|8.63':{t:'55:20',tt:'55:20',mp:'6:29',ap:'6:27',best:'5:52',cad:177,stride:0.88,gct:260,vo:8.3,vr:9.6,pow:210,up:5,down:31,kcal:593,load:68,ate:2.4,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '19-Apr-26|15.08':{t:'1:40:36',tt:'1:54:07',mp:'6:43',ap:'6:41',best:'5:54',cad:180,stride:0.83,gct:258,vo:7.7,vr:9.4,pow:203,up:34,down:57,kcal:1138,load:144,ate:3.3,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '24-Apr-26|9.34':{t:'1:00:05',tt:'1:00:14',mp:'6:31',ap:'6:27',best:'6:06',cad:176,stride:0.88,gct:262,vo:8.2,vr:9.5,pow:210,up:6,down:14,kcal:644,load:71,ate:2.5,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '25-Apr-26|15.04':{t:'1:26:54',tt:'1:37:03',mp:'5:48',ap:'5:47',best:'5:07',cad:184,stride:0.94,gct:240,vo:7.8,vr:8.4,pow:237,up:34,down:40,kcal:1188,load:235,ate:4.0,ante:2.5,focus:'Tempo',rpe:'Moderate'},
+  '26-Apr-26|9.26':{t:'1:00:05',tt:'1:00:14',mp:'6:35',ap:'6:31',best:'5:57',cad:175,stride:0.88,gct:266,vo:8.4,vr:9.8,pow:207,up:0,down:16,kcal:616,load:66,ate:2.4,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '27-Apr-26|8.03':{t:'50:19',tt:'50:19',mp:'6:18',ap:'6:17',best:'5:50',cad:177,stride:0.9,gct:259,vo:8.3,vr:9.3,pow:217,up:0,down:14,kcal:542,load:61,ate:2.4,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '29-Apr-26|7.07':{t:'45:05',tt:'45:14',mp:'6:28',ap:'6:25',best:'5:53',cad:176,stride:0.89,gct:260,vo:8.3,vr:9.5,pow:211,up:0,down:14,kcal:482,load:53,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '30-Apr-26|6.16':{t:'40:16',tt:'40:16',mp:'6:34',ap:'6:34',best:'6:07',cad:175,stride:0.87,gct:262,vo:8.4,vr:9.7,pow:207,up:0,down:13,kcal:424,load:46,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '4-May-26|6.70':{t:'45:05',tt:'50:17',mp:'6:45',ap:'6:46',best:'6:08',cad:174,stride:0.85,gct:267,vo:8.5,vr:10.2,pow:202,up:13,down:35,kcal:416,load:39,ate:2.0,ante:0.2,focus:'Base',rpe:'Very Easy'},
+  '6-May-26|7.38':{t:'45:18',tt:'45:27',mp:'6:08',ap:'6:10',best:'5:52',cad:178,stride:0.92,gct:254,vo:8.1,vr:8.9,pow:222,up:2,down:14,kcal:482,load:54,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '7-May-26|6.08':{t:'39:51',tt:'42:26',mp:'6:31',ap:'6:33',best:'6:13',cad:179,stride:0.85,gct:257,vo:8.0,vr:9.4,pow:210,up:8,down:9,kcal:417,load:42,ate:2.1,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '10-May-26|13.38':{t:'1:30:04',tt:'1:45:35',mp:'6:41',ap:'6:42',best:'6:03',cad:177,stride:0.84,gct:259,vo:8.1,vr:9.6,pow:206,up:50,down:58,kcal:926,load:94,ate:2.8,ante:0.2,focus:'Base',rpe:'Very Easy'},
+  '11-May-26|8.01':{t:'50:20',tt:'50:20',mp:'6:13',ap:'6:18',best:'5:47',cad:178,stride:0.89,gct:258,vo:8.3,vr:9.2,pow:220,up:0,down:15,kcal:521,load:52,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '12-May-26|6.32':{t:'33:54',tt:'33:57',mp:'5:22',best:'4:38',cad:184,stride:1.01,gct:221,vo:7.1,vr:7.1,pow:256,up:0,down:0,kcal:501,load:138,ate:2.9,ante:3.2,focus:'VO2 Max',rpe:'Somewhat Tired'},
+  '13-May-26|7.64':{t:'50:05',tt:'50:14',mp:'6:33',ap:'6:34',best:'6:08',cad:179,stride:0.85,gct:257,vo:7.9,vr:9.3,pow:210,up:15,down:20,kcal:545,load:60,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '14-May-26|5.82':{t:'49:11',tt:'49:11',mp:'8:11',best:'7:11',cad:138,stride:0.86,up:349,kcal:490,load:77,ate:2.5,ante:1.0,focus:'Base',rpe:'Somewhat Tired'},
+  '16-May-26|16.05':{t:'1:40:19',tt:'2:01:48',mp:'6:16',ap:'6:07',best:'5:49',cad:181,stride:0.88,gct:252,vo:7.9,vr:8.9,pow:221,up:252,down:264,kcal:1181,load:163,ate:3.4,ante:1.4,focus:'Base',rpe:'Very Easy'},
+  '17-May-26|12.26':{t:'1:10:16',tt:'1:10:16',mp:'5:41',ap:'5:41',best:'5:05',cad:182,stride:0.96,gct:240,vo:7.7,vr:8.1,pow:241,up:92,down:99,kcal:930,load:166,ate:3.4,ante:2.1,focus:'Tempo'},
+  '18-May-26|8.73':{t:'55:05',tt:'55:14',mp:'6:18',ap:'6:20',best:'5:41',cad:178,stride:0.89,gct:258,vo:8.2,vr:9.2,pow:216,up:0,down:15,kcal:518,load:49,ate:2.2,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '20-May-26|8.54':{t:'55:18',tt:'55:18',mp:'6:29',ap:'6:29',best:'6:10',cad:179,stride:0.86,gct:258,vo:8.0,vr:9.3,pow:212,up:0,down:3,kcal:578,load:59,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '23-May-26|15.02':{t:'1:26:39',tt:'1:56:16',mp:'5:44',ap:'5:47',best:'4:55',cad:185,stride:0.94,gct:239,vo:7.6,vr:8.2,pow:238,up:26,down:32,kcal:1112,load:189,ate:3.4,ante:3.1,focus:'Threshold',rpe:'Very Easy'},
+  '24-May-26|7.95':{t:'55:39',tt:'57:55',mp:'7:05',ap:'7:00',best:'6:45',cad:178,stride:0.8,gct:266,vo:7.9,vr:10.0,pow:193,up:12,down:16,kcal:480,load:35,ate:2.0,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '25-May-26|9.76':{t:'1:00:05',tt:'1:00:13',mp:'6:15',ap:'6:11',best:'5:45',cad:178,stride:0.91,gct:257,vo:8.2,vr:9.2,pow:219,up:0,down:13,kcal:621,load:62,ate:2.4,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '26-May-26|3.50':{t:'20:07',tt:'20:11',mp:'5:44',best:'5:25',cad:167,stride:1.04,gct:207,vo:6.8,vr:6.3,pow:234,up:0,down:0,kcal:286,load:80,ate:2.3,ante:2.5,focus:'VO2 Max',rpe:'Somewhat Tired'},
+  '27-May-26|9.46':{t:'1:00:05',tt:'1:00:11',mp:'6:21',ap:'6:23',best:'5:47',cad:177,stride:0.89,gct:257,vo:8.2,vr:9.2,pow:215,up:0,down:15,kcal:614,load:58,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '28-May-26|5.82':{t:'41:53',tt:'41:53',mp:'7:12',ap:'6:47',best:'5:12',cad:151,stride:0.92,gct:244,vo:7.1,vr:7.3,pow:197,up:156,down:149,kcal:493,load:224,ate:3.0,ante:4.7,focus:'Anaerobic',rpe:'Somewhat Tired'},
+  '30-May-26|16.49':{t:'1:40:05',tt:'1:41:53',mp:'6:12',ap:'6:01',best:'5:40',cad:180,stride:0.92,gct:253,vo:8.0,vr:9.0,pow:222,up:115,down:125,kcal:1137,load:151,ate:3.3,ante:1.4,focus:'Base',rpe:'Very Easy'},
+  '31-May-26|6.11':{t:'38:41',tt:'58:22',mp:'6:08',ap:'6:13',best:'5:57',cad:177,stride:0.89,gct:253,vo:8.2,vr:9.0,pow:222,up:88,down:91,kcal:396,load:44,ate:2.1,ante:0.9,focus:'Base',rpe:'Very Easy'},
+  '2-Jun-26|6.38':{t:'34:04',tt:'34:11',mp:'5:03',best:'4:49',cad:186,stride:1.01,gct:222,vo:7.4,vr:7.3,pow:271,up:0,down:0,kcal:494,load:169,ate:3.0,ante:3.9,focus:'VO2 Max',rpe:'Somewhat Tired'},
+  '3-Jun-26|3.66':{t:'24:15',tt:'24:15',mp:'6:35',ap:'6:39',best:'6:17',cad:175,stride:0.86,gct:264,vo:8.5,vr:9.9,pow:206,up:0,down:11,kcal:231,load:20,ate:1.4,ante:0.0,focus:'Recovery',rpe:'Very Easy'},
+  '4-Jun-26|4.94':{t:'34:04',tt:'34:04',mp:'6:48',ap:'6:54',best:'6:36',cad:177,stride:0.82,gct:263,vo:8.1,vr:9.8,pow:202,up:0,down:0,kcal:343,load:32,ate:2.0,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '6-Jun-26|3.73':{t:'23:12',tt:'34:00',mp:'6:10',ap:'6:14',best:'5:33',cad:179,stride:0.9,gct:249,vo:8.2,vr:9.2,pow:221,up:4,down:6,kcal:254,load:34,ate:1.9,ante:0.7,focus:'Base'},
+  '8-Jun-26|7.50':{t:'45:05',tt:'45:14',mp:'5:56',ap:'6:02',best:'5:51',cad:176,stride:0.94,pow:231,up:5,down:2,kcal:472,load:47,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '9-Jun-26|4.47':{t:'23:08',tt:'23:08',mp:'5:10',best:'4:42',cad:188,stride:1.03,kcal:294,load:71,ate:2.3,ante:1.5,focus:'Threshold'},
+  '10-Jun-26|8.57':{t:'55:05',tt:'55:09',mp:'6:27',best:'5:57',cad:181,stride:0.86,kcal:542,load:68,ate:2.5,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '13-Jun-26|14.39':{t:'1:40:12',tt:'1:59:57',mp:'6:55',ap:'6:49',best:'5:44',cad:178,stride:0.81,gct:266,vo:8.0,vr:9.9,pow:200,up:193,down:203,kcal:1030,load:105,ate:2.9,ante:0.7,focus:'Base',rpe:'Very Easy'},
+  '14-Jun-26|7.37':{t:'55:05',tt:'55:12',mp:'7:25',ap:'7:29',best:'7:04',cad:176,stride:0.76,gct:272,vo:8.1,vr:10.6,pow:185,up:10,down:14,kcal:478,load:34,ate:2.0,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '15-Jun-26|9.56':{t:'1:00:05',tt:'1:00:12',mp:'6:16',ap:'6:18',best:'5:52',cad:178,stride:0.89,gct:258,vo:8.2,vr:9.2,pow:219,up:0,down:4,kcal:605,load:57,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '17-Jun-26|8.32':{t:'1:00:15',tt:'1:02:00',mp:'7:13',ap:'7:14',best:'6:39',cad:177,stride:0.78,gct:269,vo:8.0,vr:10.2,pow:189,up:8,down:15,kcal:590,load:50,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '20-Jun-26|15.36':{t:'1:26:17',tt:'1:47:30',mp:'5:38',ap:'5:37',best:'4:55',cad:186,stride:0.96,gct:239,vo:7.7,vr:8.1,pow:244,up:36,down:35,kcal:1171,load:207,ate:3.5,ante:3.3,focus:'Threshold',rpe:'Very Easy'},
+  '21-Jun-26|8.85':{t:'1:01:51',tt:'1:01:56',mp:'6:58',ap:'6:57',best:'6:40',cad:178,stride:0.8,gct:263,vo:7.9,vr:9.8,pow:197,up:73,down:81,kcal:600,load:50,ate:2.2,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '22-Jun-26|8.05':{t:'50:05',tt:'50:13',mp:'6:14',ap:'6:14',best:'5:48',cad:178,stride:0.9,gct:256,vo:8.2,vr:9.2,pow:220,up:0,down:2,kcal:514,load:46,ate:2.2,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '23-Jun-26|7.84':{t:'50:05',tt:'50:11',mp:'6:24',ap:'6:24',best:'5:51',cad:176,stride:0.89,gct:260,vo:8.4,vr:9.5,pow:214,up:7,down:16,kcal:508,load:45,ate:2.1,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '25-Jun-26|5.90':{t:'36:11',tt:'36:11',mp:'6:09',ap:'6:04',best:'5:41',cad:181,stride:0.9,gct:253,vo:8.0,vr:9.0,pow:225,up:62,down:61,kcal:460,load:68,ate:2.4,ante:1.0,focus:'Base',rpe:'Very Easy'},
+  '27-Jun-26|12.68':{t:'1:30:05',tt:'1:36:55',mp:'7:07',ap:'7:01',best:'6:47',cad:176,stride:0.8,gct:268,vo:7.9,vr:10.0,pow:194,up:176,down:187,kcal:942,load:91,ate:2.8,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '28-Jun-26|7.10':{t:'50:05',tt:'51:45',mp:'7:07',ap:'7:05',best:'6:47',cad:177,stride:0.8,gct:264,vo:8.0,vr:10.1,pow:193,up:12,down:17,kcal:458,load:34,ate:2.0,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '29-Jun-26|7.19':{t:'50:05',tt:'50:13',mp:'7:00',ap:'6:55',best:'6:37',cad:176,stride:0.82,gct:268,vo:8.2,vr:10.2,pow:197,up:57,down:59,kcal:525,load:50,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '1-Jul-26|7.48':{t:'50:05',tt:'50:12',mp:'6:43',ap:'6:43',best:'6:29',cad:172,stride:0.87,gct:270,vo:8.6,vr:10.0,pow:204,up:0,down:4,kcal:496,load:42,ate:2.1,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '4-Jul-26|14.62':{t:'1:40:21',tt:'1:51:52',mp:'6:55',ap:'6:52',best:'6:27',cad:179,stride:0.81,gct:264,vo:7.8,vr:9.7,pow:198,up:18,down:23,kcal:997,load:85,ate:2.7,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '5-Jul-26|7.79':{t:'55:32',tt:'55:32',mp:'7:11',ap:'7:10',best:'6:41',cad:176,stride:0.8,gct:268,vo:7.9,vr:10.0,pow:189,up:16,down:39,kcal:538,load:45,ate:2.1,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '6-Jul-26|7.68':{t:'55:05',tt:'56:12',mp:'7:12',best:'7:06',cad:180,stride:0.77,kcal:475,load:46,ate:2.2,ante:0.0,focus:'Base',rpe:'Easy'},
+  '7-Jul-26|6.87':{t:'38:09',tt:'43:32',mp:'5:28',best:'4:45',cad:179,stride:1.01,gct:224,vo:7.1,vr:6.9,pow:248,up:0,down:0,kcal:570,load:125,ate:2.8,ante:3.1,focus:'Threshold',rpe:'Somewhat Tired'},
+  '8-Jul-26|8.41':{t:'55:05',tt:'55:13',mp:'6:34',ap:'6:35',best:'6:16',cad:175,stride:0.87,gct:265,vo:8.5,vr:9.8,pow:208,up:0,down:12,kcal:566,load:52,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '11-Jul-26|15.04':{t:'1:23:41',tt:'1:36:34',mp:'5:34',ap:'5:34',best:'4:53',cad:186,stride:0.97,gct:237,vo:7.7,vr:8.1,pow:246,up:12,down:17,kcal:1191,load:227,ate:3.7,ante:3.4,focus:'Threshold',rpe:'Moderate'},
+  '12-Jul-26|7.88':{t:'55:05',tt:'55:11',mp:'7:00',ap:'6:58',best:'6:47',cad:175,stride:0.82,gct:269,vo:8.5,vr:10.4,pow:196,up:34,down:36,kcal:560,load:52,ate:2.2,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '13-Jul-26|4.39':{t:'31:13',tt:'31:13',mp:'7:05',ap:'6:58',best:'6:33',cad:169,stride:0.83,gct:272,vo:8.4,vr:10.2,pow:195,up:40,down:42,kcal:307,load:31,ate:1.8,ante:0.3,focus:'Recovery',rpe:'Very Easy'},
+  '14-Jul-26|2.46':{t:'13:02',tt:'13:07',mp:'5:20',best:'5:07',cad:186,stride:1.02,kcal:156,load:30,ate:1.8,ante:0.3,focus:'Recovery',rpe:'Very Easy'},
+  '16-Jul-26|6.40':{t:'40:05',tt:'40:10',mp:'6:17',ap:'6:18',best:'5:24',cad:176,stride:0.91,gct:258,vo:8.5,vr:9.5,pow:217,up:0,down:13,kcal:416,load:46,ate:2.1,ante:0.7,focus:'Base',rpe:'Very Easy'},
+  '19-Jul-26|21.55':{t:'1:57:40',tt:'1:57:40',mp:'5:28',ap:'5:25',best:'5:04',cad:185,stride:0.99,gct:235,vo:7.6,vr:7.8,pow:253,up:151,down:146,kcal:1866,load:452,ate:5.0,ante:4.0,focus:'Tempo'},
+  '1-Aug-26|8.13':{t:'52:07',tt:'1:01:56',mp:'6:22',ap:'6:25',best:'6:01',cad:179,stride:0.87,gct:255,vo:7.8,vr:9.0,pow:214,up:8,down:10,kcal:665,load:99,ate:2.9,ante:0.1,focus:'Base'},
+  '4-Aug-26|8.51':{t:'55:05',tt:'55:12',mp:'6:30',ap:'6:31',best:'6:15',cad:175,stride:0.88,gct:263,vo:8.6,vr:9.8,pow:210,up:0,down:12,kcal:609,load:75,ate:2.6,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '5-Aug-26|8.21':{t:'55:05',tt:'1:01:14',mp:'6:42',ap:'6:34',best:'6:30',cad:175,stride:0.85,gct:265,vo:8.5,vr:10.0,pow:206,up:89,down:101,kcal:610,load:92,ate:2.6,ante:1.5,focus:'Base',rpe:'Very Easy'},
+  '10-Aug-26|6.36':{t:'42:37',tt:'43:04',mp:'6:35',ap:'6:39',best:'6:28',cad:173,stride:0.86,gct:263,vo:8.6,vr:9.8,pow:209,up:27,down:28,kcal:453,load:55,ate:2.2,ante:0.4,focus:'Base',rpe:'Very Easy'},
+  '11-Aug-26|3.01':{t:'21:56',tt:'21:56',mp:'7:18',best:'7:12',cad:178,stride:0.77,kcal:191,load:19,ate:1.4,ante:0.0,focus:'Recovery'},
+  '12-Aug-26|8.41':{t:'55:05',tt:'55:13',mp:'6:27',ap:'6:32',best:'6:11',cad:174,stride:0.88,gct:262,vo:8.5,vr:9.6,pow:213,up:20,down:27,kcal:619,load:81,ate:2.6,ante:0.3,focus:'Base',rpe:'Very Easy'},
+  '13-Aug-26|5.78':{t:'36:00',tt:'36:03',mp:'5:14',best:'5:07',cad:157,stride:1.02,kcal:435,load:100,ate:2.7,ante:2.0,focus:'Threshold',rpe:'Very Easy'},
+  '15-Aug-26|25.03':{t:'2:43:18',tt:'3:19:00',mp:'6:28',ap:'6:31',best:'5:31',cad:180,stride:0.85,gct:252,vo:7.9,vr:9.2,pow:212,up:46,down:53,kcal:2022,load:336,ate:4.7,ante:1.4,focus:'Base'},
+  '17-Aug-26|4.27':{t:'30:24',tt:'30:24',mp:'7:00',ap:'7:12',best:'6:40',cad:165,stride:0.85,gct:286,vo:8.3,vr:9.7,pow:192,up:2,down:18,kcal:282,load:23,ate:1.6,ante:0.0,focus:'Recovery',rpe:'Very Easy'},
+  '18-Aug-26|7.47':{t:'50:05',tt:'50:14',mp:'6:36',ap:'6:45',best:'6:20',cad:174,stride:0.86,gct:262,vo:8.3,vr:9.5,pow:207,up:2,down:13,kcal:497,load:48,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '19-Aug-26|7.99':{t:'50:05',tt:'50:10',mp:'6:14',ap:'6:18',best:'5:58',cad:175,stride:0.91,gct:253,vo:8.4,vr:9.2,pow:219,up:0,down:17,kcal:499,load:48,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '21-Aug-26|4.73':{t:'31:34',tt:'31:34',mp:'6:42',ap:'6:38',best:'5:44',cad:168,stride:0.89,gct:264,vo:8.7,vr:9.8,pow:202,up:32,down:48,kcal:300,load:32,ate:1.8,ante:0.6,focus:'Recovery',rpe:'Very Easy'},
+  '22-Aug-26|14.32':{t:'1:40:05',tt:'1:58:18',mp:'6:51',ap:'6:52',best:'6:21',cad:175,stride:0.82,gct:262,vo:8.1,vr:9.8,pow:202,up:200,down:206,kcal:1047,load:121,ate:3.1,ante:0.7,focus:'Base',rpe:'Very Easy'},
+  '23-Aug-26|7.01':{t:'50:05',tt:'50:12',mp:'7:08',ap:'7:10',best:'6:41',cad:177,stride:0.79,gct:264,vo:7.8,vr:9.9,pow:193,up:4,down:12,kcal:431,load:32,ate:2.0,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '24-Aug-26|7.81':{t:'50:05',tt:'50:14',mp:'6:25',ap:'6:25',best:'6:01',cad:173,stride:0.9,gct:257,vo:8.5,vr:9.5,pow:213,up:31,down:45,kcal:522,load:66,ate:2.3,ante:1.1,focus:'Base',rpe:'Very Easy'},
+  '25-Aug-26|5.55':{t:'31:25',tt:'31:25',mp:'5:31',best:'4:46',cad:175,stride:1.01,gct:216,vo:7.4,vr:7.0,pow:245,up:0,down:0,kcal:459,load:116,ate:2.7,ante:3.1,focus:'Threshold',rpe:'Somewhat Tired'},
+  '26-Aug-26|4.30':{t:'30:07',tt:'33:20',mp:'7:00',best:'6:42',cad:178,stride:0.8,kcal:275,load:30,ate:1.9,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '27-Aug-26|5.40':{t:'34:02',tt:'34:08',mp:'5:16',best:'4:42',cad:150,stride:1.06,kcal:425,load:110,ate:2.7,ante:2.7,focus:'Threshold',rpe:'Moderate'},
+  '29-Aug-26|24.03':{t:'2:28:10',tt:'2:54:39',mp:'6:11',ap:'6:07',best:'5:14',cad:181,stride:0.9,gct:244,vo:7.9,vr:8.8,pow:223,up:120,down:123,kcal:1866,load:325,ate:4.5,ante:2.6,focus:'Base',rpe:'Very Easy'},
+  '30-Aug-26|5.32':{t:'45:54',tt:'45:54',mp:'8:28',ap:'8:27',best:'7:47',cad:150,stride:0.77,gct:290,vo:8.6,vr:10.8,pow:164,up:66,down:68,kcal:352,load:21,ate:1.5,ante:0.0,focus:'Recovery',rpe:'Very Easy'},
+  '31-Aug-26|6.50':{t:'45:05',tt:'45:12',mp:'6:57',ap:'6:53',best:'6:18',cad:175,stride:0.82,gct:257,vo:8.2,vr:10.1,pow:199,up:59,down:61,kcal:479,load:53,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '1-Sep-26|4.98':{t:'30:01',tt:'30:15',mp:'5:11',best:'4:54',cad:164,stride:1.01,kcal:375,load:90,ate:2.6,ante:1.8,focus:'Threshold',rpe:'Moderate'},
+  '3-Sep-26|6.10':{t:'39:00',tt:'39:05',mp:'5:07',best:'4:53',cad:151,stride:1.04,kcal:467,load:105,ate:2.7,ante:2.0,focus:'Threshold',rpe:'Moderate'},
+  '4-Sep-26|7.02':{t:'45:53',tt:'45:53',mp:'6:31',ap:'6:34',best:'6:03',cad:173,stride:0.88,gct:258,vo:8.4,vr:9.5,pow:209,up:0,down:12,kcal:448,load:42,ate:2.1,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '5-Sep-26|27.04':{t:'2:49:13',tt:'3:16:07',mp:'6:16',ap:'6:13',best:'5:25',cad:180,stride:0.89,gct:247,vo:7.9,vr:9.0,pow:220,up:123,down:135,kcal:2061,load:332,ate:4.6,ante:2.4,focus:'Base',rpe:'Easy'},
+  '6-Sep-26|5.07':{t:'45:05',tt:'45:11',mp:'8:54',best:'7:39',cad:144,stride:0.78,kcal:317,load:23,ate:1.6,ante:0.0,focus:'Recovery'},
+  '7-Sep-26|8.12':{t:'50:05',tt:'50:14',mp:'6:11',ap:'6:11',best:'5:51',cad:176,stride:0.92,gct:250,vo:8.4,vr:9.1,pow:223,up:0,down:0,kcal:524,load:55,ate:2.3,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '8-Sep-26|6.58':{t:'40:56',tt:'40:56',mp:'5:25',best:'5:18',cad:165,stride:0.97,up:65,kcal:499,load:110,ate:2.8,ante:1.9,focus:'Threshold',rpe:'Moderate'},
+  '9-Sep-26|8.17':{t:'50:15',tt:'51:13',mp:'6:09',ap:'6:11',best:'5:53',cad:176,stride:0.92,gct:248,vo:8.5,vr:9.2,pow:222,up:6,down:15,kcal:497,load:48,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '10-Sep-26|6.31':{t:'34:06',tt:'34:32',mp:'5:23',best:'5:21',cad:167,stride:1.11,up:63,kcal:407,load:87,ate:2.6,ante:1.5,focus:'Threshold',rpe:'Moderate'},
+  '12-Sep-26|8.12':{t:'50:05',tt:'50:14',mp:'6:10',ap:'6:12',best:'5:52',cad:175,stride:0.93,gct:251,vo:8.6,vr:9.3,pow:222,up:0,down:16,kcal:522,load:55,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '13-Sep-26|30.72':{t:'3:09:40',tt:'3:09:40',mp:'5:59',ap:'6:08',best:'5:25',cad:179,stride:0.9,gct:241,vo:7.7,vr:8.5,pow:224,up:217,down:212,kcal:2590,load:508,ate:5.1,ante:3.0,focus:'Base'},
+  '14-Sep-26|9.02':{t:'55:46',tt:'55:46',mp:'6:07',ap:'6:11',best:'5:50',cad:174,stride:0.93,gct:253,vo:8.7,vr:9.3,pow:224,up:0,down:2,kcal:568,load:58,ate:2.3,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '15-Sep-26|6.67':{t:'38:25',tt:'39:41',mp:'5:46',best:'4:52',cad:183,stride:0.95,kcal:453,load:93,ate:2.7,ante:1.4,focus:'Tempo',rpe:'Very Easy'},
+  '16-Sep-26|9.05':{t:'55:05',tt:'55:13',mp:'6:07',ap:'6:08',best:'5:39',cad:176,stride:0.93,gct:252,vo:8.5,vr:9.2,pow:224,up:0,down:13,kcal:563,load:59,ate:2.3,ante:0.3,focus:'Base',rpe:'Very Easy'},
+  '17-Sep-26|6.25':{t:'34:30',tt:'34:33',mp:'5:32',best:'4:55',cad:186,stride:0.97,kcal:417,load:90,ate:2.6,ante:1.5,focus:'Threshold',rpe:'Moderate'},
+  '19-Sep-26|30.02':{t:'3:05:03',tt:'3:37:38',mp:'6:10',best:'5:26',cad:183,stride:0.89,kcal:2184,load:453,ate:5.0,ante:3.7,focus:'Tempo',rpe:'Very Easy'},
+  '22-Sep-26|8.93':{t:'50:35',tt:'50:38',mp:'5:35',best:'5:03',cad:182,stride:0.97,kcal:624,load:138,ate:3.1,ante:1.9,focus:'Tempo',rpe:'Moderate'},
+  '23-Sep-26|9.67':{t:'1:00:15',tt:'1:00:15',mp:'6:09',ap:'6:14',best:'5:47',cad:177,stride:0.91,gct:252,vo:8.3,vr:9.0,pow:223,up:6,down:14,kcal:600,load:59,ate:2.3,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '25-Sep-26|3.02':{t:'23:26',tt:'23:26',mp:'7:36',ap:'7:48',best:'6:35',cad:155,stride:0.83,gct:294,vo:8.3,vr:9.6,pow:178,up:0,down:12,kcal:174,load:10,ate:0.9,ante:0.0,focus:'Recovery',rpe:'Very Easy'},
+  '26-Sep-26|15.02':{t:'1:40:48',tt:'2:05:29',mp:'6:36',ap:'6:36',best:'5:26',cad:178,stride:0.84,gct:253,vo:8.0,vr:9.5,pow:209,up:207,down:211,kcal:1092,load:135,ate:3.2,ante:1.1,focus:'Base',rpe:'Very Easy'},
+  '27-Sep-26|8.02':{t:'1:01:12',tt:'1:01:18',mp:'7:26',ap:'7:15',best:'6:47',cad:173,stride:0.76,gct:271,vo:8.3,vr:10.8,pow:189,up:176,down:186,kcal:651,load:86,ate:2.6,ante:0.8,focus:'Base',rpe:'Very Easy'},
+  '28-Sep-26|9.53':{t:'1:00:10',tt:'1:00:10',mp:'6:14',ap:'6:20',best:'5:53',cad:178,stride:0.89,gct:254,vo:8.3,vr:9.2,pow:219,up:0,down:15,kcal:640,load:71,ate:2.5,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '30-Sep-26|8.13':{t:'52:00',tt:'52:55',mp:'6:24',best:'5:41',cad:180,stride:0.87,kcal:547,load:84,ate:2.6,ante:0.4,focus:'Tempo',rpe:'Very Easy'},
+  '1-Oct-26|8.02':{t:'50:57',tt:'50:58',mp:'6:16',ap:'6:27',best:'5:59',cad:175,stride:0.9,gct:253,vo:8.5,vr:9.4,pow:215,up:3,down:39,kcal:512,load:52,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '2-Oct-26|4.53':{t:'30:17',tt:'30:17',mp:'6:32',ap:'6:44',best:'6:14',cad:174,stride:0.86,gct:259,vo:8.6,vr:9.8,pow:208,up:0,down:14,kcal:270,load:22,ate:1.5,ante:0.0,focus:'Recovery',rpe:'Very Easy'},
+  '3-Oct-26|2.66':{t:'20:00',tt:'20:04',mp:'7:17',ap:'7:32',best:'7:14',cad:175,stride:0.76,gct:265,vo:7.8,vr:10.0,pow:187,up:4,down:8,kcal:160,load:11,ate:1.0,ante:0.0,focus:'Recovery',rpe:'Very Easy'},
+  '4-Oct-26|43.14':{t:'4:29:41',tt:'4:29:41',mp:'6:12',ap:'6:14',best:'5:40',cad:179,stride:0.89,gct:250,vo:7.8,vr:8.7,pow:221,up:240,down:251,kcal:3974,load:899,ate:5.8,ante:2.4,focus:'Base',rpe:'Easy'},
+  '12-Oct-26|5.01':{t:'42:03',tt:'42:11',mp:'8:21',ap:'8:26',best:'7:38',cad:152,stride:0.78,gct:305,vo:8.3,vr:10.5,pow:166,up:48,down:53,kcal:381,load:32,ate:2.0,ante:0.1,focus:'Base',rpe:'Very Easy'},
+  '14-Oct-26|6.03':{t:'41:01',tt:'41:01',mp:'6:42',ap:'6:50',best:'6:23',cad:174,stride:0.84,gct:264,vo:8.6,vr:10.0,pow:203,up:0,down:13,kcal:417,load:44,ate:2.1,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '15-Oct-26|6.03':{t:'39:03',tt:'39:03',mp:'6:27',ap:'6:30',best:'6:03',cad:174,stride:0.89,gct:256,vo:8.6,vr:9.7,pow:211,up:0,down:12,kcal:388,load:38,ate:2.1,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '16-Oct-26|5.02':{t:'32:12',tt:'32:20',mp:'6:25',ap:'6:29',best:'6:06',cad:173,stride:0.9,gct:257,vo:8.7,vr:9.7,pow:211,up:0,down:13,kcal:325,load:33,ate:2.0,ante:0.0,focus:'Base',rpe:'Very Easy'},
+  '18-Oct-26|5.02':{t:'35:13',tt:'35:13',mp:'7:01',best:'6:41',cad:176,stride:0.81,kcal:350,load:48,ate:2.2,ante:0.0,focus:'Base',rpe:'Very Easy'},
+};
+
 // ── Constants ────────────────────────────────────────────────────────────────
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const paceToSec = p => { const [m,s]=p.split(':').map(Number); return m*60+s; };
@@ -596,10 +787,11 @@ function renderDashboard(){
   const band=RUNS.filter(inBand);
   // Heat model: pace vs temperature inside the controlled band. The slope lets
   // hot-season runs be normalised to HEAT_REF instead of just forgiven.
-  const heatRuns=band.filter(r=>r.temp!=null);
+  // Weather-archive temps (tempSrc) read ~2 °C cooler than Strava's, so only Strava temps feed the heat model
+  const heatRuns=band.filter(r=>r.temp!=null&&!r.tempSrc);
   const heatSlope=heatRuns.length>=8?linReg(heatRuns.map(r=>r.temp),heatRuns.map(r=>r.paceSec)).slope:null;
   RUNS.forEach(r=>{
-    r.adjPaceSec=(heatSlope!=null&&r.temp!=null)?r.paceSec-heatSlope*(r.temp-HEAT_REF):r.paceSec;
+    r.adjPaceSec=(heatSlope!=null&&r.temp!=null&&!r.tempSrc)?r.paceSec-heatSlope*(r.temp-HEAT_REF):r.paceSec;
     r.mPerBeat=60000/(r.adjPaceSec*r.hr);
   });
   const easy=RUNS.filter(r=>['Easy','Long','Hills'].includes(r.type));
@@ -765,7 +957,7 @@ function renderDashboard(){
     chip.style.flexGrow=r.dist;
     chip.style.background=r.hr>=145?'oklch(0.68 0.18 25 / 0.7)':r.hr<=134?'oklch(0.78 0.14 155 / 0.7)':'oklch(0.82 0.15 75 / 0.7)';
     chip.textContent=r.dist.toFixed(1);chip.title=`${r.date} · ${r.dist.toFixed(2)}km · ${r.pace}/km · ${r.hr}bpm`;
-    chip.addEventListener('click',()=>setSelected(r.idx===selectedIdx?null:r.idx));tickerBar.appendChild(chip);
+    chip.addEventListener('click',()=>setSelected(r.idx));tickerBar.appendChild(chip);
   });
 
   const zonesEl=document.getElementById('zones');zonesEl.innerHTML='';
@@ -830,6 +1022,131 @@ function renderPhases(){
   }).join('');
 }
 
+// ── Run detail drawer ────────────────────────────────────────────────────────
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ordinal=n=>n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th');
+let detailIdx=null,detailReturnFocus=null;
+const TE_MAX=Math.max(...Object.values(RUN_DETAIL).flatMap(d=>[d.ate||0,d.ante||0]));
+
+function cell(k,v,unit){return v==null||v===''?'':`<div class="rd-cell"><div class="k">${k}</div><div class="v">${v}${unit?`<small>${unit}</small>`:''}</div></div>`;}
+function teCell(k,v){
+  if(v==null)return '';
+  const c=v>=4?'var(--coral)':v>=3?'var(--amber)':v>=2?'var(--good)':'oklch(0.78 0.11 210)';
+  // Bar is relative to the highest training effect on the page, not an official scale
+  return `<div class="rd-cell"><div class="k">${k}</div><div class="v">${v.toFixed(1)}</div><div class="rd-te"><div class="rd-te-bar"><i style="width:${Math.min(100,v/TE_MAX*100)}%;background:${c}"></i></div></div></div>`;
+}
+function section(title,cells){const c=cells.join('');return c?`<div class="rd-sec"><span class="overline">${title}</span><div class="rd-grid">${c}</div></div>`:'';}
+const signed=(n,unit)=>`${n>0?'+':n<0?'−':'±'}${Math.abs(n)}${unit}`;
+
+function openDetail(idx){
+  const r=RUNS[idx];if(!r)return;
+  if(detailIdx===null)detailReturnFocus=document.activeElement;
+  detailIdx=idx;
+  const d=RUN_DETAIL[`${r.date}|${r.dist.toFixed(2)}`]||null;
+  const iso=r.dateObj.toISOString().slice(0,10);
+  const day=DAYS[r.dateObj.getUTCDay()];
+  const zone=ZONES.find(z=>r.hr>=z.min&&r.hr<=z.max);
+  const phase=PHASES.find(p=>iso>=p.from&&(!p.to||iso<=p.to));
+  const wkNo=parseInt(r.week.replace('Week ',''),10),wk=WEEKSTATS[wkNo-1];
+  const wkRuns=RUNS.filter(x=>x.week===r.week),posInWk=wkRuns.indexOf(r)+1;
+  const same=RUNS.filter(x=>x.type===r.type&&x!==r);
+  const paceDelta=same.length?Math.round(r.paceSec-avg(same.map(x=>x.paceSec))):null;
+  const hrDelta=same.length?Math.round(r.hr-avg(same.map(x=>x.hr))):null;
+  const distRank=RUNS.filter(x=>x.dist>r.dist).length+1;
+  const paceRank=RUNS.filter(x=>x.type===r.type&&x.paceSec<r.paceSec).length+1;
+
+  document.getElementById('rd-kicker').textContent=`${r.week} · ${day}`;
+  document.getElementById('rd-title').textContent=r.menu;
+  document.getElementById('rd-sub').innerHTML=`<span class="log-type type-${r.type.toLowerCase()}">${r.type}</span>${r.dateObj.getUTCDate()} ${MONTHS[r.dateObj.getUTCMonth()]} ${r.dateObj.getUTCFullYear()}${phase?` · ${phase.name} phase`:''}`;
+
+  // Plain-language read, built only from the numbers on this page
+  const bits=[];
+  if(zone)bits.push(`${zone.name} · ${zone.title.toLowerCase()} effort at ${r.hr} bpm`);
+  if(r.type==='Easy')bits.push(r.hr<=140?'stayed under the 140 easy cap':`went ${r.hr-140} bpm over the 140 easy cap`);
+  if(r.type!=='Race'&&paceDelta!=null&&same.length>=3)bits.push(`${Math.abs(paceDelta)} s/km ${paceDelta<=0?'faster':'slower'} than your average ${r.type.toLowerCase()} run, at ${hrDelta===0?'the same heart rate':`${Math.abs(hrDelta)} bpm ${hrDelta<0?'lower':'higher'}`}`);
+  if(distRank<=10)bits.push(`your ${distRank===1?'longest':ordinal(distRank)+' longest'} run of the block`);
+  else if(r.type!=='Race'&&paceRank<=3&&same.length>=5)bits.push(`your ${paceRank===1?'fastest':ordinal(paceRank)+' fastest'} ${r.type.toLowerCase()} run`);
+  if(r.time)bits.push(`finished in ${r.time}`);
+  const read=bits.length?bits[0].charAt(0).toUpperCase()+bits.join(' — ').slice(1)+'.':'';
+
+  const heroCells=[[r.dist.toFixed(2),'km'],d?[d.t,'time']:null,[r.pace,'/km'],[r.hr,'bpm']].filter(Boolean);
+  let html=`<div class="rd-hero" style="grid-template-columns:repeat(${heroCells.length},1fr)">${heroCells.map(([v,l])=>`<div><div class="v">${v}</div><div class="l">${l}</div></div>`).join('')}</div>`;
+  if(read)html+=`<div class="rd-sec"><div class="rd-read">${esc(read)}</div></div>`;
+  html+=section('In context',[
+    zone?cell('HR zone',`<span style="color:${zone.color}">${zone.name}</span>`,zone.title):'',
+    wk?cell('Week',`${wk.km.toFixed(0)}`,`km · run ${posInWk} of ${wk.runs}`):'',
+    paceDelta!=null&&same.length>=3?cell(`vs avg ${r.type.toLowerCase()} pace`,signed(paceDelta,''),'s/km'):'',
+    hrDelta!=null&&same.length>=3?cell(`vs avg ${r.type.toLowerCase()} HR`,signed(hrDelta,''),'bpm'):'',
+    r.temp!=null?cell('Temperature',r.temp,r.tempSrc?'°C · weather archive':'°C · Strava'):'',
+    r.temp!=null&&!r.tempSrc&&Math.abs(r.adjPaceSec-r.paceSec)>=1?cell(`Heat-adjusted to ${HEAT_REF}°C`,secToPace(r.adjPaceSec),'/km'):'',
+    inBand(r)?cell('Efficiency',r.mPerBeat.toFixed(2),'m / beat'):'',
+    cell('Distance rank',ordinal(distRank),`of ${RUNS.length}`),
+  ]);
+  if(d){
+    html+=section('Effort · COROS',[
+      cell('Training load',d.load),cell('Training focus',d.focus),
+      teCell('Aerobic effect',d.ate),teCell('Anaerobic effect',d.ante),
+      cell('Perceived effort',d.rpe),cell('Calories',d.kcal,'kcal'),
+    ]);
+    html+=section('Running form · COROS',[
+      cell('Cadence',d.cad,'spm'),cell('Stride length',d.stride!=null?d.stride.toFixed(2):null,'m'),
+      cell('Ground contact',d.gct,'ms'),cell('Vertical oscillation',d.vo,'cm'),
+      cell('Vertical ratio',d.vr,'%'),cell('Power',d.pow,'W'),
+    ]);
+    html+=section('Course · COROS',[
+      d.up!=null?cell('Elevation',`+${d.up}${d.down!=null?` / −${d.down}`:''}`,'m'):'',
+      cell('Best km',d.best,'/km'),cell('Moving pace',d.mp,'/km'),
+      cell('Grade-adjusted pace',d.ap,'/km'),
+      d.tt&&d.tt!==d.t?cell('Elapsed incl. stops',d.tt):'',
+    ]);
+  } else {
+    html+=`<div class="rd-sec"><p class="rd-note">${r.double?'This entry combines two runs from the same day, so there is no single COROS breakdown for it.':'No COROS breakdown is available for this run.'}</p></div>`;
+  }
+  if(r.notes)html+=`<div class="rd-sec"><span class="overline">Notes</span><p class="rd-note">${esc(r.notes)}</p></div>`;
+  html+=`<p class="rd-src">Summary: ${r.src==='COROS'?'COROS':'Strava'}${d?' · breakdown: COROS':''}${r.tempSrc?' · temperature: Open-Meteo weather at run time (not used in heat adjustment)':''}${!d||r.src==='COROS'?'':' — small pace differences between the two are normal'}</p>`;
+  document.getElementById('rd-body').innerHTML=html;
+  document.getElementById('rd-body').scrollTop=0;
+
+  document.getElementById('rd-prev').disabled=idx===0;
+  document.getElementById('rd-next').disabled=idx===RUNS.length-1;
+  const rd=document.getElementById('rd');
+  rd.classList.add('open');rd.setAttribute('aria-hidden','false');
+  document.getElementById('rd-backdrop').classList.add('open');
+  document.body.style.overflow='hidden';
+  document.getElementById('rd-close').focus({preventScroll:true});
+}
+function closeDetail(){
+  if(detailIdx===null)return;
+  detailIdx=null;
+  const rd=document.getElementById('rd');
+  rd.classList.remove('open');rd.setAttribute('aria-hidden','true');
+  document.getElementById('rd-backdrop').classList.remove('open');
+  document.body.style.overflow='';
+  if(detailReturnFocus&&document.contains(detailReturnFocus))detailReturnFocus.focus({preventScroll:true});
+}
+function stepDetail(dir){
+  if(detailIdx===null)return;
+  const n=detailIdx+dir;if(n<0||n>=RUNS.length)return;
+  setSelected(n,{fromDrawer:true});openDetail(n);
+}
+document.getElementById('rd-close').addEventListener('click',closeDetail);
+document.getElementById('rd-backdrop').addEventListener('click',closeDetail);
+document.getElementById('rd-prev').addEventListener('click',()=>stepDetail(-1));
+document.getElementById('rd-next').addEventListener('click',()=>stepDetail(1));
+document.addEventListener('keydown',e=>{
+  if(detailIdx===null)return;
+  if(e.key==='Escape'){e.preventDefault();closeDetail();}
+  else if(e.key==='ArrowLeft'){e.preventDefault();stepDetail(-1);}
+  else if(e.key==='ArrowRight'){e.preventDefault();stepDetail(1);}
+  else if(e.key==='Tab'){ // keep focus inside the drawer
+    const f=[...document.querySelectorAll('#rd button:not(:disabled)')];
+    if(!f.length)return;
+    if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f[f.length-1].focus();}
+    else if(!e.shiftKey&&document.activeElement===f[f.length-1]){e.preventDefault();f[0].focus();}
+  }
+});
+
 function renderLog(bestEasyPace,bestEasyHR){
   const logEl=document.getElementById('log');
   const rows=(filterZone?RUNS.filter(r=>r.hr>=filterZone.min&&r.hr<=filterZone.max):RUNS.slice()).sort((a,b)=>b.dateObj-a.dateObj);
@@ -841,8 +1158,9 @@ function renderLog(bestEasyPace,bestEasyHR){
   rows.forEach(r=>{
     const isSel=selectedIdx===r.idx,isPBPace=bestEasyPace&&bestEasyPace.idx===r.idx,isPBHR=bestEasyHR&&bestEasyHR.idx===r.idx;
     const btn=document.createElement('button');btn.className='log-row body'+(r.type==='Race'?' race':'')+(isSel?' sel':'');btn.dataset.idx=r.idx;if(r.notes)btn.title=r.notes;
-    btn.innerHTML=`<span class="mono log-date">${r.date.replace(/-\d{2}$/,'')}${r.double?'<em class="log-double">2×</em>':''}</span><span class="mono log-week">${r.week}</span><span class="log-menu"><span class="log-type type-${r.type.toLowerCase()}">${r.type}</span>${r.menu}${r.time?` <span class="mono" style="color:var(--amber);font-size:11px;">${r.time}</span>`:''}</span><span class="mono log-val${isPBPace?' pb':''}">${r.pace}${isPBPace?'<em>★</em>':''}</span><span class="mono log-val${isPBHR?' pb':''}">${r.hr}${isPBHR?'<em>★</em>':''}</span><span class="mono log-val">${r.dist.toFixed(1)}</span><span class="mono log-val" style="color:${r.temp!=null?(r.temp>=30?'var(--coral)':r.temp>=27?'var(--amber)':'var(--ink-muted)'):'var(--ink-faint)'}">${r.temp!=null?r.temp+'°':'—'}</span>`;
-    btn.addEventListener('click',()=>setSelected(r.idx===selectedIdx?null:r.idx));logEl.appendChild(btn);
+    btn.innerHTML=`<span class="mono log-date">${r.date.replace(/-\d{2}$/,'')}${r.double?'<em class="log-double">2×</em>':''}</span><span class="mono log-week">${r.week}</span><span class="log-menu"><span class="log-type type-${r.type.toLowerCase()}">${r.type}</span>${r.menu}${r.time?` <span class="mono" style="color:var(--amber);font-size:11px;">${r.time}</span>`:''}</span><span class="mono log-val${isPBPace?' pb':''}">${r.pace}${isPBPace?'<em>★</em>':''}</span><span class="mono log-val${isPBHR?' pb':''}">${r.hr}${isPBHR?'<em>★</em>':''}</span><span class="mono log-val">${r.dist.toFixed(1)}</span><span class="mono log-val" ${r.tempSrc?'title="Weather-archive temperature (Open-Meteo)"':''} style="color:${r.temp!=null?(r.temp>=30?'var(--coral)':r.temp>=27?'var(--amber)':'var(--ink-muted)'):'var(--ink-faint)'}">${r.temp!=null?(r.tempSrc?'~':'')+r.temp+'°':'—'}</span>`;
+    btn.setAttribute('aria-label',`${r.date}, ${r.type}, ${r.menu}, ${r.dist.toFixed(1)} km — open details`);
+    btn.addEventListener('click',()=>setSelected(r.idx));logEl.appendChild(btn);
   });
 }
 
@@ -858,20 +1176,21 @@ function setZoneFilter(z){
   paintScatter();
   document.getElementById('clear-zone').style.display=z?'inline-block':'none';
   document.getElementById('zone-sub').textContent=z?`Filtering to ${z.name} · ${z.title}`:'Click a zone to filter the log and highlight the scatter';
-  document.getElementById('log-sub').textContent=z?`Filtered to ${z.name} · ${z.title}`:'All runs, latest first. Click a row to highlight it.';
+  document.getElementById('log-sub').textContent=z?`Filtered to ${z.name} · ${z.title}`:'All runs, latest first. Tap any run for its full breakdown.';
   const easy=RUNS.filter(r=>['Easy','Long','Hills'].includes(r.type));
   const bp=easy.length?easy.reduce((b,r)=>r.paceSec<b.paceSec?r:b,easy[0]):RUNS[0];
   const bh=easy.length?easy.reduce((b,r)=>r.hr<b.hr?r:b,easy[0]):RUNS[0];
   renderLog(bp,bh);
 }
 
-function setSelected(idx){
+function setSelected(idx,opts={}){
   selectedIdx=idx;
   document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('sel',Number(el.dataset.idx)===idx));
   document.querySelectorAll('.log-row.body').forEach(el=>el.classList.toggle('sel',Number(el.dataset.idx)===idx));
   if(idx!==null){const row=document.querySelector(`.log-row.body[data-idx="${idx}"]`);if(row)row.scrollIntoView({block:'nearest',behavior:'smooth'});}
   if(hrPaceChart){hrPaceChart.setActiveElements(idx===null?[]:[{datasetIndex:0,index:idx},{datasetIndex:1,index:idx}]);hrPaceChart.update();}
   paintScatter();
+  if(idx!==null&&!opts.fromDrawer)openDetail(idx);
 }
 
 function linReg(xs,ys){const n=xs.length,sx=xs.reduce((a,x)=>a+x,0),sy=ys.reduce((a,y)=>a+y,0),sxy=xs.reduce((a,x,i)=>a+x*ys[i],0),sxx=xs.reduce((a,x)=>a+x*x,0);const sl=(n*sxy-sx*sy)/(n*sxx-sx*sx||1);return{slope:sl,intercept:(sy-sl*sx)/n};}
